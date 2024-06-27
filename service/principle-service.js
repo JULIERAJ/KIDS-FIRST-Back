@@ -5,7 +5,7 @@ const cron = require('node-cron');
 
 const Principle = require('../models/Principle');
 
-require('dotenv').config();
+require('dotenv').config({ path: './.env.local' });
 
 const registration = async (firstname, lastname, email, password) => {
   const principle = new Principle({ firstname, lastname, email, password });

@@ -3,7 +3,7 @@ const nodemailer = require('nodemailer');
 
 const path = require('path');
 
-require('dotenv').config();
+require('dotenv').config({ path: './.env.local' });
 
 // create reusable transporter object using the default SMTP transport
 const transporter = nodemailer.createTransport({

@@ -7,7 +7,7 @@ const emailService = require('../service/email-service');
 const familyService = require('../service/family-service');
 const principleService = require('../service/principle-service');
 
-require('dotenv').config();
+require('dotenv').config({ path: './.env.local' });
 // 1 upper/lower case letter, 1 number, 1 special symbol
 // eslint-disable-next-line max-len
 const {
@@ -70,6 +70,8 @@ const registration = async (req, res) => {
       emailIsActivated: user.emailIsActivated,
     });
   } catch (e) {
+    console.error('Registration error:', e); // Log the full error
+
     return res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .json({ message: 'Something went wrong' });
@@ -227,6 +229,7 @@ const loginFacebook = async (req, res) => {
       });
     }
   } catch (error) {
+    console.error('Fetch error:', error);
     res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .json({ error: 'Error fetching data from Facebook' });
