@@ -16,23 +16,23 @@
    - Create or take an issue from the GitHub Project board.
 
 2. **Create a New Branch:**
-   - Switch to the `dev-back` branch and pull the recent changes:
+   - Switch to the `dev` branch and pull the recent changes:
      ```bash
-     git checkout dev-back
-     git pull origin dev-back
+     git checkout dev
+     git pull origin dev
      ```
-   - Create a new branch from `dev-back`:
+   - Create a new branch from `dev`:
      ```bash
      git checkout -b <branch-name>
      ```
 
 3. **Keeping Your Branch Updated:**
-   - Regularly pull changes from the `dev-back` branch to keep your branch updated:
+   - Regularly pull changes from the `dev` branch to keep your branch updated:
      ```bash
-     git checkout dev-back
-     git pull origin dev-back
+     git checkout dev
+     git pull origin dev
      git checkout <your-branch>
-     git merge dev-back
+     git merge dev
      ```
 
 ---
@@ -103,8 +103,8 @@ For more details on branch naming conventions, you can refer to [this guide](htt
      ```bash
      git push origin <branch-name>
      ```
-   - Go to the repository on GitHub and create a new Pull Request from your branch to the `dev-back` branch.
-   - Change the base branch from `main` to `dev-back`.
+   - Go to the repository on GitHub and create a new Pull Request from your branch to the `dev` branch.
+   - Change the base branch from `main` to `dev`.
 
 2. **PR Body:**
    - In the PR body, provide a clear and concise description of what has been done.
@@ -177,9 +177,9 @@ For more details on managing Pull Requests, you can refer to [this guide in GitH
      ```
 
 5. **Prevent Future Conflicts:**
-   - Regularly pull changes from the `dev-back` branch to keep your branch up to date:
+   - Regularly pull changes from the `dev` branch to keep your branch up to date:
      ```bash
-     git pull origin dev-back
+     git pull origin dev
      ```
 
 For more details on resolving merge conflicts, you can refer to [this guide in GitHub Docs](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/addressing-merge-conflicts/about-merge-conflicts).
