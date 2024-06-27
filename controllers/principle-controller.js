@@ -70,8 +70,6 @@ const registration = async (req, res) => {
       emailIsActivated: user.emailIsActivated,
     });
   } catch (e) {
-    console.error('Registration error:', e); // Log the full error
-
     return res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .json({ message: 'Something went wrong' });
@@ -229,7 +227,6 @@ const loginFacebook = async (req, res) => {
       });
     }
   } catch (error) {
-    console.error('Fetch error:', error);
     res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .json({ error: 'Error fetching data from Facebook' });

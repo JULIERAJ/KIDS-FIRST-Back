@@ -16,9 +16,10 @@ const resetPasswordRoutes = require('./routes/reset-password');
 // eslint-disable-next-line no-unused-vars, import/order
 const { loginSocial } = require('./controllers/principle-controller');
 require('dotenv').config({ path: './.env.local' });
+
 mongoose.set('strictQuery', true);
 const mongoDB = process.env.MONGODB_URI;
-const PORT = process.env.PORT;
+const { PORT } = process.env;
 
 const app = express();
 
@@ -32,7 +33,7 @@ db.once('connected', () => console.log('Database Connected'));
 
 morgan.token(
   'body',
-  (req) => `\x1b[36m"body": ${JSON.stringify(req.body)}\x1b[0m \n`
+  (req) => `\x1b[36m"body": ${JSON.stringify(req.body)}\x1b[0m \n`,
 );
 
 // middlewares

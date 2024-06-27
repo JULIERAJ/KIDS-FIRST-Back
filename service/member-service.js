@@ -11,28 +11,6 @@ const isDuplicate = async (firstName, lastName, family) => {
   return !!checkDuplicate;
 };
 
-const memberRegistration = async ({
-  family,
-  firstName,
-  lastName,
-  principle,
-  kidsList,
-  inviteeEmail,
-  inviteeInviteLater,
-}) => {
-  // use helper function on array kidNames to create kid members
-  await saveKids(kidsList, family);
-  await savePrinciple(firstName, lastName, principle, family);
-  // await saveInvitation(principle, family, inviteeEmail);
-  await invitationController.invitation(
-    principle,
-    family,
-    inviteeEmail,
-    firstName,
-    inviteeInviteLater,
-  );
-};
-
 const saveKids = async (kidsList, family) => {
   try {
     if (kidsList) {
@@ -57,6 +35,27 @@ const savePrinciple = async (firstName, lastName, principle, family) => {
     role: 'parent',
   });
   await principleMemberInfo.save();
+};
+const memberRegistration = async ({
+  family,
+  firstName,
+  lastName,
+  principle,
+  kidsList,
+  inviteeEmail,
+  inviteeInviteLater,
+}) => {
+  // use helper function on array kidNames to create kid members
+  await saveKids(kidsList, family);
+  await savePrinciple(firstName, lastName, principle, family);
+  // await saveInvitation(principle, family, inviteeEmail);
+  await invitationController.invitation(
+    principle,
+    family,
+    inviteeEmail,
+    firstName,
+    inviteeInviteLater,
+  );
 };
 
 // const saveInvitation = async (principle, family, inviteeEmail) => {

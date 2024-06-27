@@ -6,7 +6,7 @@ const path = require('path');
 require('dotenv').config();
 
 // create reusable transporter object using the default SMTP transport
-let transporter = nodemailer.createTransport({
+const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: process.env.SMTP_PORT,
   secure: false,
@@ -21,7 +21,7 @@ const renderTemplate = (templateName, data) => {
   const templatePath = path.join(
     __dirname,
     '../templates',
-    `${templateName}.ejs`
+    `${templateName}.ejs`,
   );
   return ejs.renderFile(templatePath, data);
 };
@@ -57,7 +57,7 @@ const sendGeneralEmail = async (
   messageText,
   buttonText,
   endText,
-  href
+  href,
 ) => {
   const htmlContent = await renderTemplate('body', {
     greetingText,
@@ -85,7 +85,7 @@ const sendActivationEmail = async (email, emailVerificationToken) => {
     messageText,
     buttonText,
     endText,
-    href
+    href,
   );
 };
 
@@ -106,7 +106,7 @@ const sendResetPasswordEmail = async (email, resetPasswordToken) => {
     messageText,
     buttonText,
     endText,
-    href
+    href,
   );
 };
 
@@ -115,7 +115,7 @@ const sendInvitationEmail = async (
   email,
   family,
   emailVerificationToken,
-  firstName
+  firstName,
 ) => {
   const href = `${process.env.CLIENT_URL}/register/${email}/${family}/${emailVerificationToken}`;
   const subject = `You have been invited by ${firstName} to register in Kids First app`;
@@ -131,7 +131,7 @@ const sendInvitationEmail = async (
     messageText,
     buttonText,
     endText,
-    href
+    href,
   );
 };
 
