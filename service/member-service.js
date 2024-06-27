@@ -8,7 +8,7 @@ const isDuplicate = async (firstName, lastName, family) => {
     lastName,
     family,
   });
-  return checkDuplicate ? true : false;
+  return !!checkDuplicate;
 };
 
 const memberRegistration = async ({
@@ -29,7 +29,7 @@ const memberRegistration = async ({
     family,
     inviteeEmail,
     firstName,
-    inviteeInviteLater
+    inviteeInviteLater,
   );
 };
 
@@ -40,7 +40,7 @@ const saveKids = async (kidsList, family) => {
         kidsList
           .map((kid) => kid.trim())
           .filter((kid) => kid.length > 0)
-          .map((kid) => new Member({ firstName: kid, family, role: 'kid' }))
+          .map((kid) => new Member({ firstName: kid, family, role: 'kid' })),
       );
     }
   } catch (err) {

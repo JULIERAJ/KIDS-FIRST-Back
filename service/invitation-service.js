@@ -4,7 +4,7 @@ const createInvitation = async (
   inviter,
   family,
   inviteeEmail,
-  invitationUrl
+  invitationUrl,
 ) => {
   const invitation = await new Invitation({
     inviter,
@@ -24,7 +24,7 @@ const createInvitation = async (
 
 const findInviteeEmail = async (inviteeEmail) => {
   const InviteeEmail = await Invitation.findOne({ inviteeEmail }).exec();
-  return InviteeEmail ? InviteeEmail : null;
+  return InviteeEmail || null;
 };
 
 const findInviteeDuplicate = async (inviteeEmail, family) => {
@@ -33,14 +33,14 @@ const findInviteeDuplicate = async (inviteeEmail, family) => {
     family,
   }).exec();
 
-  return inviteeDuplicate.length > 0 ? true : false;
+  return inviteeDuplicate.length > 0;
 };
 
 const acceptedInvitation = async (inviteeEmail) => {
   const invitation = await Invitation.findOneAndUpdate(
     { inviteeEmail },
     { invitationAccepted: true },
-    { new: true }
+    { new: true },
   );
   return invitation;
 };

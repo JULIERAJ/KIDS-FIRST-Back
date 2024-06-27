@@ -17,7 +17,7 @@ const memberRegistration = async (req, res) => {
     const isMemberDuplicate = await memberService.isDuplicate(
       firstName,
       lastName,
-      family
+      family,
     );
 
     if (!isMemberDuplicate) {
@@ -31,11 +31,10 @@ const memberRegistration = async (req, res) => {
         inviteeInviteLater,
       });
       return res.status(StatusCodes.CREATED).json(memberData);
-    } else {
-      return res.status(StatusCodes.CONFLICT).json({
-        message: `The member ${firstName} ${lastName} already exists in the family ${family}.`,
-      });
     }
+    return res.status(StatusCodes.CONFLICT).json({
+      message: `The member ${firstName} ${lastName} already exists in the family ${family}.`,
+    });
   } catch (e) {
     return res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)

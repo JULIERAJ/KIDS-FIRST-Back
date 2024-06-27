@@ -21,7 +21,6 @@ const jwtOptions = {
 };
 const registration = async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
-  console.log("CONTROLLER", firstName, lastName, email, password)
   try {
     // check that first name is entered
     if (!firstName) {
@@ -29,8 +28,6 @@ const registration = async (req, res) => {
         .status(StatusCodes.BAD_REQUEST)
         .json({ message: 'First name is required' });
     }
-    console.log('Checking if user exists');
-
     let user = await principleService.findUser(email);
 
     if (user) {
@@ -38,7 +35,6 @@ const registration = async (req, res) => {
         .status(StatusCodes.CONFLICT)
         .json({ message: 'This email address is already in use' });
     }
-    console.log('Validating password');
 
     if (!passwordRegExp.test(password)) {
       return res.status(StatusCodes.BAD_REQUEST).json({
@@ -46,38 +42,35 @@ const registration = async (req, res) => {
           long and contain at least one uppercase letter, one lowercase letter, 
           one number, and one symbol.`,
       });
-    } else if (!emailRegExp.test(email)) {
+    }
+    if (!emailRegExp.test(email)) {
       return res
         .status(StatusCodes.BAD_REQUEST)
         .json({ message: 'Invalid email' });
-    } 
-    console.log('Registering user');
+    }
 
-      user = await principleService.registration(
-        firstName,
-        lastName,
-        email,
-        password
-      );
-      console.log('Creating email verification token');
+    user = await principleService.registration(
+      firstName,
+      lastName,
+      email,
+      password,
+    );
 
-      const emailVerificationToken = await jwt.sign(
-        { email },
-        process.env.JWT_EMAIL_VERIFICATION_SECRET,
-        jwtOptions
-      );
-      console.log('Sending activation email');
+    const emailVerificationToken = await jwt.sign(
+      { email },
+      process.env.JWT_EMAIL_VERIFICATION_SECRET,
+      jwtOptions,
+    );
 
-      await emailService.sendActivationEmail(email, emailVerificationToken);
+    await emailService.sendActivationEmail(email, emailVerificationToken);
 
-      return res.status(StatusCodes.CREATED).json({
-        message: 'Verify your email.',
-        email: user.email,
-        emailIsActivated: user.emailIsActivated,
-      });
-    
+    return res.status(StatusCodes.CREATED).json({
+      message: 'Verify your email.',
+      email: user.email,
+      emailIsActivated: user.emailIsActivated,
+    });
   } catch (e) {
-    console.error('Registration error:', e);  // Log the full error
+    console.error('Registration error:', e); // Log the full error
 
     return res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
@@ -86,7 +79,7 @@ const registration = async (req, res) => {
 };
 const accountActivation = async (req, res) => {
   const activationToken = req.params.emailVerificationToken;
-  const email = req.params.email;
+  const { email } = req.params;
   try {
     const user = await principleService.findUser(email);
     if (user.emailIsActivated === true) {
@@ -104,23 +97,22 @@ const accountActivation = async (req, res) => {
       return res
         .status(StatusCodes.BAD_REQUEST)
         .json({ message: 'Activation link is not correct' });
-    } else {
-      const principleData = await principleService.activateAccount(email);
-      // autogenerate family name and save it in db
-      const familyName = familyService.generateFamilyName();
-
-      const familyNameRegistration = await familyService.familyRegistration(
-        familyName,
-        principleData._id
-      );
-
-      return res.status(StatusCodes.OK).json({
-        message: 'The account is successfully activated',
-        email: principleData.email,
-        emailIsActivated: principleData.emailIsActivated,
-        familyName: familyNameRegistration.familyName,
-      });
     }
+    const principleData = await principleService.activateAccount(email);
+    // autogenerate family name and save it in db
+    const familyName = familyService.generateFamilyName();
+
+    const familyNameRegistration = await familyService.familyRegistration(
+      familyName,
+      principleData._id,
+    );
+
+    return res.status(StatusCodes.OK).json({
+      message: 'The account is successfully activated',
+      email: principleData.email,
+      emailIsActivated: principleData.emailIsActivated,
+      familyName: familyNameRegistration.familyName,
+    });
   } catch (e) {
     return res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
@@ -143,7 +135,7 @@ const resendActivationEmail = async (req, res) => {
     const emailVerificationToken = await jwt.sign(
       { email },
       process.env.JWT_EMAIL_VERIFICATION_SECRET,
-      { expiresIn: process.env.JWT_LIFETIME }
+      { expiresIn: process.env.JWT_LIFETIME },
     );
     // Send the activation email with the generated token
     await emailService.sendActivationEmail(email, emailVerificationToken);
@@ -184,7 +176,7 @@ const login = async (req, res) => {
 
     // when the user login, then find that user's family(s), then push the info  to the front
     const principleFamily = await familyService.findPrincipleFamilyName(
-      user._id
+      user._id,
     );
 
     return res.status(StatusCodes.OK).json({
@@ -213,12 +205,12 @@ const loginFacebook = async (req, res) => {
       await principleService.registration(
         data.email,
         password,
-        emailIsActivated
+        emailIsActivated,
       );
       const token = jwt.sign(
         { email: data.email },
         process.env.JWT_EMAIL_VERIFICATION_SECRET,
-        jwtOptions
+        jwtOptions,
       );
       res.json({
         token,
@@ -229,7 +221,7 @@ const loginFacebook = async (req, res) => {
       const token = jwt.sign(
         { email: data.email },
         process.env.JWT_EMAIL_VERIFICATION_SECRET,
-        jwtOptions
+        jwtOptions,
       );
       res.json({
         token,
@@ -254,7 +246,7 @@ const loginSocial = async (req, res) => {
 
   let user = await principleService.findUser(userID);
   if (!user) {
-    let password = generatePassword();
+    const password = generatePassword();
     user = await principleService.registration(userID, password);
     principleService.activateAccount(user.email);
   }
@@ -286,13 +278,13 @@ const requestResetPassword = async (req, res) => {
     const passwordResetVerificationToken = await jwt.sign(
       { email },
       process.env.JWT_EMAIL_VERIFICATION_SECRET,
-      jwtOptions
+      jwtOptions,
     );
 
     // Send an email with the reset password link
     await emailService.sendResetPasswordEmail(
       email,
-      passwordResetVerificationToken
+      passwordResetVerificationToken,
     );
     return res.status(StatusCodes.OK).json({
       message: `Reset password link sent to ${email}`,
@@ -310,12 +302,11 @@ const resetPasswordActivation = async (req, res) => {
       return res
         .status(StatusCodes.CREATED)
         .json({ status: StatusCodes.CREATED });
-    } else {
-      return res.status(StatusCodes.UNAUTHORIZED).json({
-        status: StatusCodes.UNAUTHORIZED,
-        message: 'User does not exist',
-      });
     }
+    return res.status(StatusCodes.UNAUTHORIZED).json({
+      status: StatusCodes.UNAUTHORIZED,
+      message: 'User does not exist',
+    });
   } catch (err) {
     return res
       .status(StatusCodes.UNAUTHORIZED)
@@ -332,16 +323,15 @@ const resetPasswordUpdates = async (req, res) => {
     });
   }
   try {
-    const decoded = await principleService.emailTokenVerification(
-      resetPasswordToken
-    );
+    const decoded =
+      await principleService.emailTokenVerification(resetPasswordToken);
     if (!decoded) {
       return res
         .status(StatusCodes.UNAUTHORIZED)
         .json({ msg: 'Invalid token' });
     }
     // update user
-    let user = await principleService.updateUserPassword(email, password);
+    const user = await principleService.updateUserPassword(email, password);
     // hash password using isPasswordCorrect
     await user.save();
     return res

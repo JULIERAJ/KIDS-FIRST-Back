@@ -10,27 +10,27 @@ const invitation = async (
   family,
   inviteeEmail,
   firstName,
-  inviteeInviteLater
+  inviteeInviteLater,
 ) => {
   if (!inviteeInviteLater) {
     try {
-      let duplicate = await invitationService.findInviteeDuplicate(
+      const duplicate = await invitationService.findInviteeDuplicate(
         inviteeEmail,
-        family
+        family,
       );
 
       if (duplicate) {
         const emailVerificationToken = await jwt.sign(
           { inviteeEmail },
           process.env.JWT_EMAIL_VERIFICATION_SECRET,
-          { expiresIn: process.env.JWT_EMAIL_LIFETIME }
+          { expiresIn: process.env.JWT_EMAIL_LIFETIME },
         );
 
         await emailService.sendInvitationEmail(
           inviteeEmail,
           family,
           emailVerificationToken,
-          firstName
+          firstName,
         );
         /* return res
           .status(200)
@@ -44,14 +44,14 @@ const invitation = async (
         const emailVerificationToken = await jwt.sign(
           { inviteeEmail },
           process.env.JWT_EMAIL_VERIFICATION_SECRET,
-          { expiresIn: process.env.JWT_EMAIL_LIFETIME }
+          { expiresIn: process.env.JWT_EMAIL_LIFETIME },
         );
 
         const invitationURL = await emailService.sendInvitationEmail(
           inviteeEmail,
           family,
           emailVerificationToken,
-          firstName
+          firstName,
         );
         /*
         return {
@@ -66,7 +66,7 @@ const invitation = async (
           inviter,
           family,
           inviteeEmail,
-          invitationURL
+          invitationURL,
         );
       }
     } catch (e) {
@@ -80,7 +80,7 @@ const invitation = async (
 
 const invitationAccepted = async (req, res) => {
   const emailToken = req.params.emailVerificationToken;
-  const email = req.params.email;
+  const { email } = req.params;
 
   try {
     const invitation = await invitationService.findInviteeEmail(email);
@@ -100,14 +100,13 @@ const invitationAccepted = async (req, res) => {
       return res
         .status(StatusCodes.BAD_REQUEST)
         .json({ message: 'invitation link is not correct' });
-    } else {
-      const invitationData = await invitationService.acceptedInvitation(email);
-      return res.status(StatusCodes.OK).json({
-        message: 'the invitation is successfully accepted',
-        email: invitationData.inviteeEmail,
-        invitationAccepted: invitationData.invitationAccepted,
-      });
     }
+    const invitationData = await invitationService.acceptedInvitation(email);
+    return res.status(StatusCodes.OK).json({
+      message: 'the invitation is successfully accepted',
+      email: invitationData.inviteeEmail,
+      invitationAccepted: invitationData.invitationAccepted,
+    });
   } catch (e) {
     return res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)

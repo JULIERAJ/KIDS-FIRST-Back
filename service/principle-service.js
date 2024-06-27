@@ -11,12 +11,17 @@ const registration = async (firstname, lastname, email, password) => {
   const principle = new Principle({ firstname, lastname, email, password });
   await principle.save();
 
-  return { id: principle._id, email: principle.email, firstname: principle.firstname, lastname: principle.lastname };
+  return {
+    id: principle._id,
+    email: principle.email,
+    firstname: principle.firstname,
+    lastname: principle.lastname,
+  };
 };
 
 const findUser = async (email) => {
   const user = await Principle.findOne({ email }).exec();
-  return user ? user : null;
+  return user || null;
 };
 
 // need to add logic when compare stored password with the password provided.
@@ -31,16 +36,16 @@ const isPasswordCorrect = async (email, password) => {
 const emailTokenVerification = async (activationToken) => {
   const tokenVerified = jwt.verify(
     activationToken,
-    process.env.JWT_EMAIL_VERIFICATION_SECRET
+    process.env.JWT_EMAIL_VERIFICATION_SECRET,
   );
-  return tokenVerified ? true : false;
+  return !!tokenVerified;
 };
 
 const activateAccount = async (email) => {
   const user = await Principle.findOneAndUpdate(
     { email: email },
     { emailIsActivated: true },
-    { new: true }
+    { new: true },
   );
   return user;
 };
@@ -63,7 +68,7 @@ const updateUserPassword = async (email, password) => {
   const updatedUser = await Principle.findOneAndUpdate(
     { email: email },
     { $set: { password: hashedPassword } },
-    { new: true }
+    { new: true },
   );
   return updatedUser;
 };
@@ -88,7 +93,7 @@ const deleteInactiveUsers = async () => {
       // Map over the array of inactive users and delete each user
       inactiveUsers.map(async (user) => {
         await Principle.findByIdAndDelete(user._id); // Delete user by ID
-      })
+      }),
     );
 
     // Log the number of inactive users deleted

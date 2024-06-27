@@ -30,7 +30,7 @@ const isDuplicate = async (familyName, principleId) => {
     familyName,
     principle: principleId,
   });
-  return checkDuplicate ? true : false;
+  return !!checkDuplicate;
 };
 
 const findPrincipleFamilyName = async (principleId) => {
