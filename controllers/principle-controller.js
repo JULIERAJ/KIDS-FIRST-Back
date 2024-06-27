@@ -7,7 +7,7 @@ const emailService = require('../service/email-service');
 const familyService = require('../service/family-service');
 const principleService = require('../service/principle-service');
 
-require('dotenv').config({ path: './.env.local' });
+require('dotenv').config();
 // 1 upper/lower case letter, 1 number, 1 special symbol
 // eslint-disable-next-line max-len
 const {
@@ -21,7 +21,7 @@ const jwtOptions = {
 };
 const registration = async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
-  console.log(firstName, lastName, email, password)
+  console.log("CONTROLLER", firstName, lastName, email, password)
   try {
     // check that first name is entered
     if (!firstName) {
@@ -29,6 +29,8 @@ const registration = async (req, res) => {
         .status(StatusCodes.BAD_REQUEST)
         .json({ message: 'First name is required' });
     }
+    console.log('Checking if user exists');
+
     let user = await principleService.findUser(email);
 
     if (user) {
@@ -36,6 +38,8 @@ const registration = async (req, res) => {
         .status(StatusCodes.CONFLICT)
         .json({ message: 'This email address is already in use' });
     }
+    console.log('Validating password');
+
     if (!passwordRegExp.test(password)) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         message: `Password must be at least 8 characters 
@@ -46,18 +50,24 @@ const registration = async (req, res) => {
       return res
         .status(StatusCodes.BAD_REQUEST)
         .json({ message: 'Invalid email' });
-    } else if (!user) {
+    } 
+    console.log('Registering user');
+
       user = await principleService.registration(
         firstName,
         lastName,
         email,
         password
       );
+      console.log('Creating email verification token');
+
       const emailVerificationToken = await jwt.sign(
         { email },
         process.env.JWT_EMAIL_VERIFICATION_SECRET,
         jwtOptions
       );
+      console.log('Sending activation email');
+
       await emailService.sendActivationEmail(email, emailVerificationToken);
 
       return res.status(StatusCodes.CREATED).json({
@@ -65,8 +75,10 @@ const registration = async (req, res) => {
         email: user.email,
         emailIsActivated: user.emailIsActivated,
       });
-    }
+    
   } catch (e) {
+    console.error('Registration error:', e);  // Log the full error
+
     return res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .json({ message: 'Something went wrong' });

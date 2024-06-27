@@ -3,7 +3,7 @@ const nodemailer = require('nodemailer');
 
 const path = require('path');
 
-require('dotenv').config({ path: './.env.local' });
+require('dotenv').config();
 
 // create reusable transporter object using the default SMTP transport
 let transporter = nodemailer.createTransport({
@@ -20,8 +20,7 @@ let transporter = nodemailer.createTransport({
 const renderTemplate = (templateName, data) => {
   const templatePath = path.join(
     __dirname,
-    '.',
-    'templates',
+    '../templates',
     `${templateName}.ejs`
   );
   return ejs.renderFile(templatePath, data);
@@ -38,7 +37,7 @@ const sendEmail = async (email, subject, htmlContent) => {
       attachments: [
         {
           filename: 'kids_first_logo_beta.png',
-          path: '../media/logo/kids_first_logo_beta.png',
+          path: path.join(__dirname, '../media/logo/kids_first_logo_beta.png'),
           cid: 'logo',
         },
       ],
