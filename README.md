@@ -17,3 +17,5 @@ KIDS FIRST is a co-parenting app that aspires to give divorced parents a fair an
 5. Open your `.env.local` file
 6. Edit `MONGODB_URI` variable and set it to the value of your MongoDB connection string 
 7. Run `npm run start`
+
+Create your own branch and use it while developing your code.
