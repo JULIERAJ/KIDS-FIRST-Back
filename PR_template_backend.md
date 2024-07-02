@@ -28,9 +28,9 @@ Any additional information relevant to the PR, such as context, reasons for chan
 - Describe changes to the database schema and any necessary migrations.
 
 ## Checklist
-- Pull Request title includes the issue number and a brief description of the change.
-- All changes should be tested and verified to work correctly.
-- Code follows backend best practices.
-- Branch names follow the conventions in the contributing file.
-- Commit messages follow the naming conventions in the contributing file.
-- No sensitive data or secrets are included in the codebase.
+- [x] Pull Request title includes the issue number and a brief description of the change.
+- [x] All changes should be tested and verified to work correctly.
+- [x] Code follows backend best practices.
+- [x] Branch names follow the conventions in the contributing file.
+- [x] Commit messages follow the naming conventions in the contributing file.
+- [x] No sensitive data or secrets are included in the codebase.
