@@ -3,9 +3,6 @@
 ## One Line Description
 Briefly describe what this pull request does.
 
-## Description
-Provide a clear and concise description of what has been done in this PR.
-
 ## Requirements
 - Clearly describe the requirements and functionalities expected from the code changes.
 - Requirements should be derived from the issue description.
