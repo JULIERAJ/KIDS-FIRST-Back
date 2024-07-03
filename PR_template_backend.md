@@ -3,9 +3,6 @@
 ## One Line Description
 Briefly describe what this pull request does.
 
-## Description
-Provide a clear and concise description of what has been done in this PR.
-
 ## Requirements
 - Clearly describe the requirements and functionalities expected from the code changes.
 - Requirements should be derived from the issue description.
@@ -31,9 +28,9 @@ Any additional information relevant to the PR, such as context, reasons for chan
 - Describe changes to the database schema and any necessary migrations.
 
 ## Checklist
-- Pull Request title includes the issue number and a brief description of the change.
-- All changes should be tested and verified to work correctly.
-- Code follows backend best practices.
-- Branch names follow the conventions in the contributing file.
-- Commit messages follow the naming conventions in the contributing file.
-- No sensitive data or secrets are included in the codebase.
+- [x] Pull Request title includes the issue number and a brief description of the change.
+- [x] All changes should be tested and verified to work correctly.
+- [x] Code follows backend best practices.
+- [x] Branch names follow the conventions in the contributing file.
+- [x] Commit messages follow the naming conventions in the contributing file.
+- [x] No sensitive data or secrets are included in the codebase.
