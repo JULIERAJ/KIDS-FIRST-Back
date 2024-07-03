@@ -10,7 +10,7 @@ const memberRegistration = asyncWrapper(async (req, res) => {
     inviteeEmail,
     inviteeInviteLater,
     family,
-    principle,
+    user,
   } = req.body;
 
   const isMemberDuplicate = await memberService.isDuplicate(
@@ -24,7 +24,7 @@ const memberRegistration = asyncWrapper(async (req, res) => {
       family,
       firstName,
       lastName,
-      principle,
+      user,
       kidsList,
       inviteeEmail,
       inviteeInviteLater,

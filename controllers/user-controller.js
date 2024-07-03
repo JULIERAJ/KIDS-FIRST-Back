@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const fetch = require('node-fetch');
 const emailService = require('../service/email-service');
 const familyService = require('../service/family-service');
-const principleService = require('../service/principle-service');
+const userService = require('../service/user-service');
 const asyncWrapper = require('../middleware/async-wrapper');
 
 require('dotenv').config({ path: './.env.local' });
@@ -21,22 +21,25 @@ const jwtOptions = {
 
 const registration = asyncWrapper(async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
+  // check that first name is entered
   if (!firstName) {
     return res
       .status(StatusCodes.BAD_REQUEST)
       .json({ message: 'First name is required' });
   }
-  let user = await principleService.findUser(email);
+  let user = await userService.findUser(email);
+
   if (user) {
     return res
       .status(StatusCodes.CONFLICT)
       .json({ message: 'This email address is already in use' });
   }
+
   if (!passwordRegExp.test(password)) {
     return res.status(StatusCodes.BAD_REQUEST).json({
       message: `Password must be at least 8 characters 
-        long and contain at least one uppercase letter, one lowercase letter, 
-        one number, and one symbol.`,
+          long and contain at least one uppercase letter, one lowercase letter, 
+          one number, and one symbol.`,
     });
   }
   if (!emailRegExp.test(email)) {
@@ -44,29 +47,27 @@ const registration = asyncWrapper(async (req, res) => {
       .status(StatusCodes.BAD_REQUEST)
       .json({ message: 'Invalid email' });
   }
-  user = await principleService.registration(
-    firstName,
-    lastName,
-    email,
-    password,
-  );
+
+  user = await userService.registration(firstName, lastName, email, password);
+
   const emailVerificationToken = await jwt.sign(
     { email },
     process.env.JWT_EMAIL_VERIFICATION_SECRET,
     jwtOptions,
   );
+
   await emailService.sendActivationEmail(email, emailVerificationToken);
-  res.status(StatusCodes.CREATED).json({
+
+  return res.status(StatusCodes.CREATED).json({
     message: 'Verify your email.',
     email: user.email,
     emailIsActivated: user.emailIsActivated,
   });
 });
-
 const accountActivation = asyncWrapper(async (req, res) => {
   const activationToken = req.params.emailVerificationToken;
   const { email } = req.params;
-  const user = await principleService.findUser(email);
+  const user = await userService.findUser(email);
   if (user.emailIsActivated === true) {
     return res.status(StatusCodes.OK).json({
       message: 'Email has been verified',
@@ -75,30 +76,30 @@ const accountActivation = asyncWrapper(async (req, res) => {
     });
   }
   const activationTokenVerified =
-    await principleService.emailTokenVerification(activationToken);
+    await userService.emailTokenVerification(activationToken);
   if (!activationTokenVerified) {
     return res
       .status(StatusCodes.BAD_REQUEST)
       .json({ message: 'Activation link is not correct' });
   }
-  const principleData = await principleService.activateAccount(email);
+  const userData = await userService.activateAccount(email);
   // autogenerate family name and save it in db
   const familyName = familyService.generateFamilyName();
   const familyNameRegistration = await familyService.familyRegistration(
     familyName,
-    principleData._id,
+    userData._id,
   );
   return res.status(StatusCodes.OK).json({
     message: 'The account is successfully activated',
-    email: principleData.email,
-    emailIsActivated: principleData.emailIsActivated,
+    email: userData.email,
+    emailIsActivated: userData.emailIsActivated,
     familyName: familyNameRegistration.familyName,
   });
 });
 
 const resendActivationEmail = asyncWrapper(async (req, res) => {
   const { email } = req.body;
-  const user = await principleService.findUser(email);
+  const user = await userService.findUser(email);
   if (!user) {
     return res
       .status(StatusCodes.NOT_FOUND)
@@ -123,28 +124,24 @@ const login = asyncWrapper(async (req, res) => {
       .status(StatusCodes.BAD_REQUEST)
       .json({ error: 'Invalid email address' });
   }
-  const user = await principleService.findUser(email);
+  const user = await userService.findUser(email);
   if (!user) {
-    return res
-      .status(StatusCodes.NOT_FOUND)
-      .json({ error: 'User not found' });
+    return res.status(StatusCodes.NOT_FOUND).json({ error: 'User not found' });
   }
   const isPasswordCorrect =
-    password && (await principleService.isPasswordCorrect(email, password));
+    password && (await userService.isPasswordCorrect(email, password));
   if (!isPasswordCorrect) {
     return res
       .status(StatusCodes.UNAUTHORIZED)
       .json({ error: 'Password is not correct' });
   }
   // when the user login, then find that user's family(s), then push the info  to the front
-  const principleFamily = await familyService.findPrincipleFamilyName(
-    user._id,
-  );
+  const userFamily = await familyService.findUserFamilyName(user._id);
   return res.status(StatusCodes.OK).json({
     email: user.email,
     id: user._id,
-    familyId: principleFamily[0].id,
-    familyName: principleFamily[0].familyName,
+    familyId: userFamily[0].id,
+    familyName: userFamily[0].familyName,
   });
 });
 
@@ -154,15 +151,11 @@ const loginFacebook = asyncWrapper(async (req, res) => {
   const fetchResponse = await fetch(urlGraphFacebook, { method: 'GET' });
   const data = await fetchResponse.json();
   const { email } = data;
-  const user = await principleService.findUser(email);
+  const user = await userService.findUser(email);
   if (!user) {
     const password = data.email + process.env.JWT_EMAIL_VERIFICATION_SECRET;
     const emailIsActivated = true;
-    await principleService.registration(
-      data.email,
-      password,
-      emailIsActivated,
-    );
+    await userService.registration(data.email, password, emailIsActivated);
     const token = jwt.sign(
       { email: data.email },
       process.env.JWT_EMAIL_VERIFICATION_SECRET,
@@ -193,18 +186,19 @@ const loginSocial = asyncWrapper(async (req, res) => {
       .status(StatusCodes.UNAUTHORIZED)
       .json({ error: 'Error fetching data from Google' });
   }
-  let user = await principleService.findUser(userID);
+
+  let user = await userService.findUser(userID);
   if (!user) {
     const password = generatePassword();
-    user = await principleService.registration(userID, password);
-    principleService.activateAccount(user.email);
+    user = await userService.registration(userID, password);
+    userService.activateAccount(user.email);
   }
-  const principleFamily = await familyService.findPrincipleFamilyName(user._id);
+  const userFamily = await familyService.findUserFamilyName(user._id);
   return res.status(StatusCodes.OK).json({
     email: user.email,
     id: user._id,
-    familyId: principleFamily.id,
-    familyName: principleFamily.familyName,
+    familyId: userFamily.id,
+    familyName: userFamily.familyName,
   });
 });
 
@@ -215,7 +209,7 @@ const requestResetPassword = asyncWrapper(async (req, res) => {
       .status(StatusCodes.BAD_REQUEST)
       .json({ error: 'Email is required' });
   }
-  const user = await principleService.findUser(email);
+  const user = await userService.findUser(email);
   if (!user) {
     return res
       .status(StatusCodes.NOT_FOUND)
@@ -237,7 +231,7 @@ const requestResetPassword = asyncWrapper(async (req, res) => {
 
 const resetPasswordActivation = asyncWrapper(async (req, res) => {
   const { email, resetPasswordToken } = req.params;
-  if (principleService.validateUserAndToken(email, resetPasswordToken)) {
+  if (userService.validateUserAndToken(email, resetPasswordToken)) {
     return res
       .status(StatusCodes.CREATED)
       .json({ status: StatusCodes.CREATED });
@@ -257,14 +251,11 @@ const resetPasswordUpdates = asyncWrapper(async (req, res) => {
         at least one uppercase letter, one lowercase letter, one number, and one symbol`,
     });
   }
-  const decoded =
-    await principleService.emailTokenVerification(resetPasswordToken);
+  const decoded = await userService.emailTokenVerification(resetPasswordToken);
   if (!decoded) {
-    return res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ msg: 'Invalid token' });
+    return res.status(StatusCodes.UNAUTHORIZED).json({ msg: 'Invalid token' });
   }
-  const user = await principleService.updateUserPassword(email, password);
+  const user = await userService.updateUserPassword(email, password);
   await user.save();
   return res
     .status(StatusCodes.OK)

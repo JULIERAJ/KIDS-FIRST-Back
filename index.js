@@ -14,7 +14,7 @@ const memberRoutes = require('./routes/member');
 const registerRoutes = require('./routes/register');
 const resetPasswordRoutes = require('./routes/reset-password');
 // eslint-disable-next-line no-unused-vars, import/order
-//const { loginSocial } = require('./controllers/principle-controller');
+// const { loginSocial } = require('./controllers/user-controller');
 const errorHandlerMiddleware = require('./middleware/error-handler');
 const notFoundMiddleware = require('./middleware/not-found');
 

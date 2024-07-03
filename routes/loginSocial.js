@@ -1,9 +1,9 @@
 const express = require('express');
 
-const principleController = require('../controllers/principle-controller');
+const userController = require('../controllers/user-controller');
 
 const router = express.Router();
 
-router.post('/loginSocial', principleController.loginSocial);
+router.post('/loginSocial', userController.loginSocial);
 
 module.exports = router;
