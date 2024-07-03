@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 const uniqueValidator = require('mongoose-unique-validator');
 
-const principleSchema = new Schema({
+const UserSchema = new Schema({
   firstname: {
     type: String,
     required: true,
@@ -18,17 +18,30 @@ const principleSchema = new Schema({
   },
   email: {
     type: String,
-    required: true,
+    required: [true, 'Please enter your email'],
     //check that it is unique, without duplication
     unique: true,
     lowercase: true,
   },
-
   password: {
     type: String,
-    required: true,
+    required: [true, 'Please provide your password'],
     trim: true,
   },
+  passwordResetToken: {
+    type: String,
+    default: null,
+  },
+  role: {
+    type: String,
+    // default: 'user',
+  },
+  kids: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'Kid',
+    },
+  ],
   createdAt: {
     type: Date,
     default: Date.now(),
@@ -44,17 +57,17 @@ const principleSchema = new Schema({
   },
 });
 
-principleSchema.pre('save', async function (next) {
-  const principle = this;
+UserSchema.pre('save', async function (next) {
+  const user = this;
   // only hash the password if it has been modified (or is new)
   // SALT_WORK_FACTOR = 8, auto-gen a salt and hash
-  if (principle.isModified('password')) {
-    principle.password = await bcrypt.hash(principle.password, 8);
+  if (user.isModified('password')) {
+    user.password = await bcrypt.hash(user.password, 8);
   }
   next();
 });
 
 // Apply the uniqueValidator plugin to principleSchema.
-principleSchema.plugin(uniqueValidator);
+UserSchema.plugin(uniqueValidator);
 
-module.exports = mongoose.model('Principle', principleSchema);
+module.exports = mongoose.model('User', UserSchema);

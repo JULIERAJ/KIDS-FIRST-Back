@@ -3,32 +3,32 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cron = require('node-cron');
 
-const Principle = require('../models/Principle');
+const User = require('../models/User');
 
 require('dotenv').config({ path: './.env.local' });
 
 const registration = async (firstname, lastname, email, password) => {
-  const principle = new Principle({ firstname, lastname, email, password });
-  await principle.save();
+  const user = new User({ firstname, lastname, email, password });
+  await user.save();
 
   return {
-    id: principle._id,
-    email: principle.email,
-    firstname: principle.firstname,
-    lastname: principle.lastname,
+    id: user._id,
+    email: user.email,
+    firstname: user.firstname,
+    lastname: user.lastname,
   };
 };
 
 const findUser = async (email) => {
-  const user = await Principle.findOne({ email }).exec();
+  const user = await User.findOne({ email }).exec();
   return user || null;
 };
 
 // need to add logic when compare stored password with the password provided.
 // Depends on what crypting module is used. For ex bcrypt
 const isPasswordCorrect = async (email, password) => {
-  const principle = await Principle.findOne({ email });
-  const isMatch = await bcrypt.compare(password, principle.password);
+  const user = await User.findOne({ email });
+  const isMatch = await bcrypt.compare(password, user.password);
 
   return isMatch;
 };
@@ -42,7 +42,7 @@ const emailTokenVerification = async (activationToken) => {
 };
 
 const activateAccount = async (email) => {
-  const user = await Principle.findOneAndUpdate(
+  const user = await User.findOneAndUpdate(
     { email: email },
     { emailIsActivated: true },
     { new: true },
@@ -65,7 +65,7 @@ const updateUserPassword = async (email, password) => {
     throw new Error('User not found');
   }
   const hashedPassword = await bcrypt.hash(password, 8);
-  const updatedUser = await Principle.findOneAndUpdate(
+  const updatedUser = await User.findOneAndUpdate(
     { email: email },
     { $set: { password: hashedPassword } },
     { new: true },
@@ -78,7 +78,7 @@ const deleteInactiveUsers = async () => {
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000); // 1 hour ago in milliseconds
   try {
     // Find users who haven't activated their account and were created more than 1 hour ago
-    const inactiveUsers = await Principle.find({
+    const inactiveUsers = await User.find({
       emailIsActivated: false, // Filter: email is not activated
       createdAt: { $lt: oneHourAgo }, // Filter: created more than 1 hour ago
     });
@@ -87,7 +87,7 @@ const deleteInactiveUsers = async () => {
     await Promise.all(
       // Map over the array of inactive users and delete each user
       inactiveUsers.map(async (user) => {
-        await Principle.findByIdAndDelete(user._id); // Delete user by ID
+        await User.findByIdAndDelete(user._id); // Delete user by ID
       }),
     );
 

@@ -1,16 +1,16 @@
 const express = require('express');
 
-const principleController = require('../controllers/principle-controller');
+const userController = require('../controllers/user-controller');
 
 const router = express.Router();
 
 router.get(
   '/reset-password/:email/:resetPasswordToken',
-  principleController.resetPasswordActivation,
+  userController.resetPasswordActivation,
 );
 router.post(
   '/reset-password/:email/:resetPasswordToken',
-  principleController.resetPasswordUpdates,
+  userController.resetPasswordUpdates,
 );
 
 module.exports = router;

@@ -1,19 +1,19 @@
 const express = require('express');
 
 const invitationController = require('../controllers/invitation-controller');
-const principleController = require('../controllers/principle-controller');
+const userController = require('../controllers/user-controller');
 
 const router = express.Router();
 
-router.post('/register', principleController.registration);
+router.post('/register', userController.registration);
 router.get(
   '/activate/:email/:emailVerificationToken',
-  principleController.accountActivation,
+  userController.accountActivation,
 );
 router.get(
   '/register/:email/:family/:emailVerificationToken',
   invitationController.invitationAccepted,
 );
-router.post('/resend-email', principleController.resendActivationEmail);
+router.post('/resend-email', userController.resendActivationEmail);
 
 module.exports = router;

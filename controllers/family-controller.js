@@ -3,18 +3,18 @@ const { StatusCodes } = require('http-status-codes');
 const familyService = require('../service/family-service');
 
 const familyRegistration = async (req, res) => {
-  const { familyName, principleId } = req.body;
+  const { familyName, userId } = req.body;
 
   try {
     const isFamilyDuplicate = await familyService.isDuplicate(
       familyName,
-      principleId,
+      userId,
     );
 
     if (!isFamilyDuplicate) {
       const familyData = await familyService.familyRegistration(
         familyName,
-        principleId,
+        userId,
       );
       return res.status(StatusCodes.CREATED).json(familyData);
     }

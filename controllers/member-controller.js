@@ -10,7 +10,7 @@ const memberRegistration = async (req, res) => {
     inviteeEmail,
     inviteeInviteLater,
     family,
-    principle,
+    user,
   } = req.body;
 
   try {
@@ -25,7 +25,7 @@ const memberRegistration = async (req, res) => {
         family,
         firstName,
         lastName,
-        principle,
+        user,
         kidsList,
         inviteeEmail,
         inviteeInviteLater,

@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 
 const emailService = require('../service/email-service');
 const invitationService = require('../service/invitation-service');
-const principleService = require('../service/principle-service');
+const userService = require('../service/user-service');
 
 const invitation = async (
   inviter,
@@ -94,7 +94,7 @@ const invitationAccepted = async (req, res) => {
     }
 
     const activationTokenVerified =
-      await principleService.emailTokenVerification(emailToken);
+      await userService.emailTokenVerification(emailToken);
 
     if (!activationTokenVerified) {
       return res

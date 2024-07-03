@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
 const invitationSchema = new Schema({
-  inviter: { type: Schema.Types.ObjectId, ref: 'Principle' },
+  inviter: { type: Schema.Types.ObjectId, ref: 'User' },
   family: { type: Schema.Types.ObjectId, ref: 'Family' },
   inviteeEmail: {
     type: String,

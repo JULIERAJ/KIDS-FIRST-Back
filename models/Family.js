@@ -3,8 +3,8 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
 const familySchema = new Schema({
-  principle: {
-    type: [{ type: Schema.Types.ObjectId, ref: 'Principle' }],
+  user: {
+    type: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   },
 
   familyName: {
