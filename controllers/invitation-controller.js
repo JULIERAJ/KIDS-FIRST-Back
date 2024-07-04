@@ -47,16 +47,14 @@ const invitation = asyncWrapper(async (req, res) => {
         message: 'Invitation email is sent',
         inviteeEmail,
       });
-    } else {
-      return res.status(StatusCodes.OK).json({
-        message: `Invitation email to ${inviteeEmail} is sent`,
-      });
     }
-  } else {
     return res.status(StatusCodes.OK).json({
-      message: 'Invitee has chosen to be invited later',
+      message: `Invitation email to ${inviteeEmail} is sent`,
     });
   }
+  return res.status(StatusCodes.OK).json({
+    message: 'Invitee has chosen to be invited later',
+  });
 });
 
 const invitationAccepted = asyncWrapper(async (req, res) => {
