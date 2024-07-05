@@ -217,7 +217,11 @@ const loginSocial = asyncWrapper(async (req, res) => {
 });
 
 const logout = asyncWrapper(async (req, res) => {
-  res.json({ message: 'Logged out successfully' });
+  if (req.user) {
+    res.status(200).json({ message: 'Logged out successfully' });
+  } else {
+    res.status(401).json({ message: 'Invalid token' });
+  }
 });
 
 const requestResetPassword = asyncWrapper(async (req, res) => {
