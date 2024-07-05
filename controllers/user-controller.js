@@ -15,6 +15,8 @@ const {
   emailRegExp,
 } = require('../utils/passwordUtils');
 
+// Secret key for JWT
+const jwtSecret = process.env.JWT_SECRET;
 const jwtOptions = {
   expiresIn: process.env.JWT_LIFETIME,
 };
@@ -135,9 +137,21 @@ const login = asyncWrapper(async (req, res) => {
       .status(StatusCodes.UNAUTHORIZED)
       .json({ error: 'Password is not correct' });
   }
+
+  // Generate JWT
+  const token = jwt.sign(
+    {
+      email: user.email,
+      id: user._id,
+    },
+    jwtSecret,
+    jwtOptions,
+  );
+
   // when the user login, then find that user's family(s), then push the info  to the front
   const userFamily = await familyService.findUserFamilyName(user._id);
   return res.status(StatusCodes.OK).json({
+    token, //add token to the response
     email: user.email,
     id: user._id,
     familyId: userFamily[0].id,
@@ -200,6 +214,10 @@ const loginSocial = asyncWrapper(async (req, res) => {
     familyId: userFamily.id,
     familyName: userFamily.familyName,
   });
+});
+
+const logout = asyncWrapper(async (req, res) => {
+  res.json({ message: 'Logged out successfully' });
 });
 
 const requestResetPassword = asyncWrapper(async (req, res) => {
@@ -268,6 +286,7 @@ module.exports = {
   login,
   loginFacebook,
   loginSocial,
+  logout,
   requestResetPassword,
   resetPasswordActivation,
   resetPasswordUpdates,
