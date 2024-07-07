@@ -3,13 +3,14 @@ const cors = require('cors');
 const express = require('express');
 const mongoose = require('mongoose');
 const morgan = require('morgan');
-
+const verifyJWT = require('./middleware/verify-jwt');
 const familyRoutes = require('./routes/family');
 const forgetPasswordRoutes = require('./routes/forget-password');
 // const invitationRoutes = require('./routes/invitation');
 const loginRoutes = require('./routes/login');
 const loginFacebookRoutes = require('./routes/loginFacebook');
 const loginSocialRoutes = require('./routes/loginSocial');
+const logoutRoutes = require('./routes/logout');
 const memberRoutes = require('./routes/member');
 const registerRoutes = require('./routes/register');
 const resetPasswordRoutes = require('./routes/reset-password');
@@ -45,15 +46,21 @@ app.use(express.json());
 app.use(morgan('dev'));
 app.use(morgan(':body'));
 
-app.use('/api', familyRoutes);
-// app.use('/api', invitationRoutes);
+
 app.use('/api', loginRoutes);
-app.use('/api', memberRoutes);
 app.use('/api', registerRoutes);
-app.use('/api', forgetPasswordRoutes);
-app.use('/api', resetPasswordRoutes);
 app.use('/api', loginFacebookRoutes);
 app.use('/api', loginSocialRoutes);
+
+app.use(verifyJWT); // All routes after this will require JWT verification
+
+app.use('/api', familyRoutes);
+
+// app.use('/api', invitationRoutes);
+app.use('/api', memberRoutes);
+app.use('/api', forgetPasswordRoutes);
+app.use('/api', resetPasswordRoutes);
+app.use('/api', logoutRoutes);
 
 app.use(notFoundMiddleware);
 app.use(errorHandlerMiddleware);
