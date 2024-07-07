@@ -76,6 +76,7 @@ const updateUserPassword = async (email, password) => {
 // Define the function to delete inactive users
 const deleteInactiveUsers = async () => {
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000); // 1 hour ago in milliseconds
+
   try {
     // Find users who haven't activated their account and were created more than 1 hour ago
     const inactiveUsers = await User.find({

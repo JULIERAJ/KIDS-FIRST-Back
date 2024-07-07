@@ -70,7 +70,7 @@ const accountActivation = asyncWrapper(async (req, res) => {
   const user = await userService.findUser(email);
   if (user.emailIsActivated === true) {
     return res.status(StatusCodes.OK).json({
-      message: 'Email has been verified',
+      message: 'Thank you for verifying your email address!',
       email: user.email,
       emailIsActivated: user.emailIsActivated,
     });
@@ -108,7 +108,6 @@ const resendActivationEmail = asyncWrapper(async (req, res) => {
   const emailVerificationToken = await jwt.sign(
     { email },
     process.env.JWT_EMAIL_VERIFICATION_SECRET,
-    { expiresIn: process.env.JWT_LIFETIME },
   );
   await emailService.sendActivationEmail(email, emailVerificationToken);
   return res
