@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
 const cors = require('cors');
 const express = require('express');
-const mongoose = require('mongoose');
 const morgan = require('morgan');
 const verifyJWT = require('./middleware/verify-jwt');
 const familyRoutes = require('./routes/family');
@@ -19,21 +18,7 @@ const resetPasswordRoutes = require('./routes/reset-password');
 const errorHandlerMiddleware = require('./middleware/error-handler');
 const notFoundMiddleware = require('./middleware/not-found');
 
-require('dotenv').config({ path: './.env.local' });
-
-mongoose.set('strictQuery', true);
-const mongoDB = process.env.MONGODB_URI;
-const { PORT } = process.env;
-
 const app = express();
-
-mongoose.connect(mongoDB);
-
-const db = mongoose.connection;
-
-db.on('error', (error) => console.log('MongoDB connection error:', error));
-
-db.once('connected', () => console.log('Database Connected'));
 
 morgan.token(
   'body',
@@ -45,7 +30,6 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 app.use(morgan(':body'));
-
 
 app.use('/api', loginRoutes);
 app.use('/api', registerRoutes);
@@ -65,4 +49,4 @@ app.use('/api', logoutRoutes);
 app.use(notFoundMiddleware);
 app.use(errorHandlerMiddleware);
 
-app.listen(PORT, () => console.log(`server started on ${PORT}`));
+module.exports = app;

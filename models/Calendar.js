@@ -28,10 +28,12 @@ const CalendarEventSchema = new Schema({
     ref: 'User',
     required: true,
   },
-  sharedWith: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-  },
+  sharedWith: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
+  ],
   eventType: {
     type: String,
     enum: ['solo', 'shared'],
