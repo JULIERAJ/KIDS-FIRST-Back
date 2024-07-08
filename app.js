@@ -18,8 +18,6 @@ const resetPasswordRoutes = require('./routes/reset-password');
 const errorHandlerMiddleware = require('./middleware/error-handler');
 const notFoundMiddleware = require('./middleware/not-found');
 
-// require('dotenv').config({ path: './.env.local' });
-
 const app = express();
 
 morgan.token(
