@@ -7,15 +7,15 @@ const User = require('../models/User');
 
 require('dotenv').config({ path: './.env.local' });
 
-const registration = async (firstname, lastname, email, password) => {
-  const user = new User({ firstname, lastname, email, password });
+const registration = async (firstName, lastName, email, password) => {
+  const user = new User({ firstName, lastName, email, password });
   await user.save();
 
   return {
     id: user._id,
     email: user.email,
-    firstname: user.firstname,
-    lastname: user.lastname,
+    firstName: user.firstName,
+    lastName: user.lastName,
   };
 };
 

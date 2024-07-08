@@ -5,12 +5,12 @@ const { Schema } = mongoose;
 const uniqueValidator = require('mongoose-unique-validator');
 
 const UserSchema = new Schema({
-  firstname: {
+  firstName: {
     type: String,
     required: true,
     trim: true,
   },
-  lastname: {
+  lastName: {
     type: String,
     required: false,
     trim: true,
@@ -61,8 +61,9 @@ UserSchema.pre('save', async function (next) {
   const user = this;
   // only hash the password if it has been modified (or is new)
   // SALT_WORK_FACTOR = 8, auto-gen a salt and hash
+  const salt = await bcrypt.genSalt(10);
   if (user.isModified('password')) {
-    user.password = await bcrypt.hash(user.password, 8);
+    user.password = await bcrypt.hash(user.password, salt);
   }
   next();
 });
