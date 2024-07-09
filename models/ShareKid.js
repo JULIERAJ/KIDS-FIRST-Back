@@ -4,12 +4,12 @@ const { Schema } = mongoose;
 
 const ShareKidSchema = new Schema(
   {
-    inviterId: {
+    inviterID: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
     },
-    kidsId: [
+    kidIDs: [
       {
         type: Schema.Types.ObjectId,
         ref: 'Kid',
@@ -56,7 +56,7 @@ const ShareKidSchema = new Schema(
 
 // prevent creating duplicated entries where the same inviter attempts to share the same kids info with the same invitee multiple times
 ShareKidSchema.index(
-  { inviterId: 1, kidsId: 1, inviteeEmail: 1 },
+  { inviterID: 1, kidIDs: 1, inviteeEmail: 1 },
   { unique: true },
 );
 module.exports = mongoose.model('ShareKid', ShareKidSchema);
