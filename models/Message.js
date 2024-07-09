@@ -4,12 +4,12 @@ const { Schema } = mongoose;
 
 const MessageSchema = new Schema(
   {
-    senderId: {
+    senderID: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
     },
-    receiverId: {
+    receiverID: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
@@ -30,7 +30,7 @@ const MessageSchema = new Schema(
 );
 
 // add index to improve query performance
-MessageSchema.index({ senderId: 1 });
-MessageSchema.index({ receiverId: 1 });
+MessageSchema.index({ senderID: 1 });
+MessageSchema.index({ receiverID: 1 });
 
 module.exports = mongoose.model('Message', MessageSchema);
