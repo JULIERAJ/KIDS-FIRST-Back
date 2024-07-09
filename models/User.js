@@ -1,61 +1,55 @@
 const bcrypt = require('bcryptjs');
+const uniqueValidator = require('mongoose-unique-validator');
 const mongoose = require('mongoose');
 
 const { Schema } = mongoose;
-const uniqueValidator = require('mongoose-unique-validator');
 
-const UserSchema = new Schema({
-  firstName: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  lastName: {
-    type: String,
-    required: false,
-    trim: true,
-    default: '',
-  },
-  email: {
-    type: String,
-    required: [true, 'Please enter your email'],
-    //check that it is unique, without duplication
-    unique: true,
-    lowercase: true,
-  },
-  password: {
-    type: String,
-    required: [true, 'Please provide your password'],
-    trim: true,
-  },
-  passwordResetToken: {
-    type: String,
-    default: null,
-  },
-  role: {
-    type: String,
-    // default: 'user',
-  },
-  kids: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: 'Kid',
+const UserSchema = new Schema(
+  {
+    firstName: {
+      type: String,
+      required: true,
+      trim: true,
     },
-  ],
-  createdAt: {
-    type: Date,
-    default: Date.now(),
-    immutable: true,
+    lastName: {
+      type: String,
+      required: false,
+      trim: true,
+      default: '',
+    },
+    email: {
+      type: String,
+      required: [true, 'Please enter your email'],
+      //check that it is unique, without duplication
+      unique: true,
+      lowercase: true,
+    },
+    password: {
+      type: String,
+      required: [true, 'Please provide your password'],
+      trim: true,
+    },
+    passwordResetToken: {
+      type: String,
+      default: null,
+    },
+    role: {
+      type: String,
+      // default: 'user',
+    },
+    kids: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Kid',
+      },
+    ],
+    emailIsActivated: {
+      type: Boolean,
+      default: false,
+    },
   },
-  updatedAt: {
-    type: Date,
-    default: Date.now(),
-  },
-  emailIsActivated: {
-    type: Boolean,
-    default: false,
-  },
-});
+  { timestamps: true },
+);
 
 UserSchema.pre('save', async function (next) {
   const user = this;
