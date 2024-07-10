@@ -26,7 +26,9 @@ const errorHandlerMiddleware = (err, req, res, next) => {
   }
   if (err.name === 'TokenExpiredError') {
     customError.message =
-      err.userMessage || 'Session expired, please login again';
+      //err.userMessage || 'Session expired, please login again';
+      err.userMessage || 'jwt expired';
+
     customError.statusCode = 401;
   }
 

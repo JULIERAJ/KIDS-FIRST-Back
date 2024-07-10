@@ -17,6 +17,7 @@ const {
 
 const jwtOptions = {
   expiresIn: process.env.JWT_LIFETIME,
+  //expiresIn: '1m',
 };
 
 const registration = asyncWrapper(async (req, res) => {
