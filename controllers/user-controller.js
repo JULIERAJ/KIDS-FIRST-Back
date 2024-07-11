@@ -5,7 +5,7 @@ const emailService = require('../service/email-service');
 const familyService = require('../service/family-service');
 const userService = require('../service/user-service');
 const asyncWrapper = require('../middleware/async-wrapper');
-
+const { jwtSignAndSetCookie } = require('../utils/authUtils');
 require('dotenv').config({ path: './.env.local' });
 // 1 upper/lower case letter, 1 number, 1 special symbol
 // eslint-disable-next-line max-len
@@ -17,9 +17,8 @@ const {
 
 // Secret key for JWT
 const jwtSecret = process.env.JWT_SECRET;
-const jwtOptions = {
-  expiresIn: process.env.JWT_LIFETIME,
-};
+const jwtOptions = { expiresIn: process.env.JWT_LIFETIME };
+const jwtEmailOptions = { expiresIn: process.env.JWT_EMAIL_LIFETIME };
 
 const registration = asyncWrapper(async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
@@ -55,7 +54,7 @@ const registration = asyncWrapper(async (req, res) => {
   const emailVerificationToken = await jwt.sign(
     { email },
     process.env.JWT_EMAIL_VERIFICATION_SECRET,
-    jwtOptions,
+    jwtEmailOptions,
   );
 
   await emailService.sendActivationEmail(email, emailVerificationToken);
@@ -110,7 +109,7 @@ const resendActivationEmail = asyncWrapper(async (req, res) => {
   const emailVerificationToken = await jwt.sign(
     { email },
     process.env.JWT_EMAIL_VERIFICATION_SECRET,
-    { expiresIn: process.env.JWT_LIFETIME },
+    jwtEmailOptions,
   );
   await emailService.sendActivationEmail(email, emailVerificationToken);
   return res
@@ -138,20 +137,18 @@ const login = asyncWrapper(async (req, res) => {
       .json({ error: 'Password is not correct' });
   }
 
-  // Generate JWT
-  const token = jwt.sign(
-    {
-      email: user.email,
-      id: user._id,
-    },
+  // Generate JWT and set cookie
+  jwtSignAndSetCookie(
+    { email: user.email, id: user._id },
     jwtSecret,
     jwtOptions,
+    res,
   );
 
   // when the user login, then find that user's family(s), then push the info  to the front
   const userFamily = await familyService.findUserFamilyName(user._id);
+
   return res.status(StatusCodes.OK).json({
-    token, //add token to the response
     email: user.email,
     id: user._id,
     familyId: userFamily[0].id,
@@ -170,57 +167,121 @@ const loginFacebook = asyncWrapper(async (req, res) => {
     const password = data.email + process.env.JWT_EMAIL_VERIFICATION_SECRET;
     const emailIsActivated = true;
     await userService.registration(data.email, password, emailIsActivated);
-    const token = jwt.sign(
+
+    // Generate JWT and set cookie
+    jwtSignAndSetCookie(
       { email: data.email },
       process.env.JWT_EMAIL_VERIFICATION_SECRET,
-      jwtOptions,
+      jwtEmailOptions,
+      res,
     );
+
     res.json({
-      token,
       email: data.email,
     });
   }
   if (user) {
-    const token = jwt.sign(
+    // Generate JWT and set cookie
+    jwtSignAndSetCookie(
       { email: data.email },
       process.env.JWT_EMAIL_VERIFICATION_SECRET,
-      jwtOptions,
+      jwtEmailOptions,
+      res,
     );
     res.json({
-      token,
       email: data.email,
     });
   }
 });
 
 const loginSocial = asyncWrapper(async (req, res) => {
-  const { userID } = req.body;
-  if (userID === undefined) {
+  const { accessToken } = req.body;
+
+  // Handle missing access token
+  if (!accessToken) {
     return res
       .status(StatusCodes.UNAUTHORIZED)
-      .json({ error: 'Error fetching data from Google' });
+      .json({ error: 'Access token is required' });
   }
 
-  let user = await userService.findUser(userID);
-  if (!user) {
-    const password = generatePassword();
-    user = await userService.registration(userID, password);
-    userService.activateAccount(user.email);
+  try {
+    // Fetch user data from Google API
+    const urlGoogleUserInfo = `https://www.googleapis.com/oauth2/v3/userinfo`;
+    const response = await fetch(urlGoogleUserInfo, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    // Handle response from Google API
+    if (!response.ok) {
+      throw new Error('Failed to fetch user data from Google API');
+    }
+
+    const userData = await response.json();
+
+    // Extract relevant user data (email, sub) from Google's response
+    const { email, sub: googleUserId } = userData;
+
+    // Attempt to find the user by Google user ID
+    let user = await userService.findUser(googleUserId);
+
+    // If user does not exist, register them (simulating registration for Google login)
+    if (!user) {
+      const password = generatePassword(); // Generate a secure password
+      user = await userService.registration(email, password); // Register user
+      userService.activateAccount(user.email); // Activate user account
+    }
+
+    // Retrieve family information associated with the user
+    const userFamily = await familyService.findUserFamilyName(user._id);
+
+    // Generate JWT and set cookie
+    jwtSignAndSetCookie(
+      { email, id: googleUserId },
+      process.env.JWT_EMAIL_VERIFICATION_SECRET,
+      jwtEmailOptions,
+      res,
+    );
+
+    // Return response with user and family information
+    return res.status(StatusCodes.OK).json({
+      email,
+      id: googleUserId,
+      familyId: userFamily.id,
+      familyName: userFamily.familyName,
+    });
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Error fetching user data from Google API:', error.message);
+    return res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ error: 'Failed to login with Google' });
   }
-  const userFamily = await familyService.findUserFamilyName(user._id);
-  return res.status(StatusCodes.OK).json({
-    email: user.email,
-    id: user._id,
-    familyId: userFamily.id,
-    familyName: userFamily.familyName,
-  });
 });
 
 const logout = asyncWrapper(async (req, res) => {
-  if (req.user) {
-    res.status(200).json({ message: 'Logged out successfully' });
-  } else {
-    res.status(401).json({ message: 'Invalid token' });
+  try {
+    if (!req.user) {
+      return res
+        .status(StatusCodes.UNAUTHORIZED)
+        .json({ message: 'Unauthorized: No user authenticated' });
+    }
+
+    // Clear HTTP-only cookie named 'token'
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+
+    res.status(StatusCodes.OK).json({ message: 'Logged out successfully' });
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('Error during logout:', err);
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: 'Failed to logout' });
   }
 });
 

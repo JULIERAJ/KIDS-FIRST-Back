@@ -1,6 +1,8 @@
 /* eslint-disable no-console */
 const cors = require('cors');
 const express = require('express');
+// eslint-disable-next-line import/no-extraneous-dependencies
+const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
 const verifyJWT = require('./middleware/verify-jwt');
 const familyRoutes = require('./routes/family');
@@ -19,6 +21,7 @@ const errorHandlerMiddleware = require('./middleware/error-handler');
 const notFoundMiddleware = require('./middleware/not-found');
 
 const app = express();
+app.use(cookieParser());
 
 morgan.token(
   'body',
