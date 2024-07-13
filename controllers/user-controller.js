@@ -138,12 +138,7 @@ const login = asyncWrapper(async (req, res) => {
   }
 
   // Generate JWT and set cookie
-  attachCookies(
-    { email: user.email, id: user._id },
-    jwtSecret,
-    jwtOptions,
-    res,
-  );
+  attachCookies({ res, user });
 
   // when the user login, then find that user's family(s), then push the info  to the front
   const userFamily = await familyService.findUserFamilyName(user._id);
@@ -261,7 +256,6 @@ const loginSocial = asyncWrapper(async (req, res) => {
 });
 
 const logout = asyncWrapper(async (req, res) => {
-   console.log('Logout function called');
   if (!req.user) {
       console.log('No user found in request');
       return res
@@ -273,11 +267,10 @@ const logout = asyncWrapper(async (req, res) => {
     res.clearCookie('token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'Lax', 
+      sameSite: 'Lax',
+      signed: true,
+      expires: new Date(0),
     });
-
-    console.log('Clearing cookie: Set-Cookie header should be sent now.');
-  console.log('Response headers:', res.getHeaders());
   
     res.status(StatusCodes.OK).json({ message: 'Logged out successfully' });
 });
