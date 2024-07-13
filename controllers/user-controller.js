@@ -5,7 +5,7 @@ const emailService = require('../service/email-service');
 const familyService = require('../service/family-service');
 const userService = require('../service/user-service');
 const asyncWrapper = require('../middleware/async-wrapper');
-const { jwtSignAndSetCookie } = require('../utils/authUtils');
+const { attachCookies } = require('../utils/authUtils');
 require('dotenv').config({ path: './.env.local' });
 // 1 upper/lower case letter, 1 number, 1 special symbol
 // eslint-disable-next-line max-len
@@ -138,7 +138,7 @@ const login = asyncWrapper(async (req, res) => {
   }
 
   // Generate JWT and set cookie
-  jwtSignAndSetCookie(
+  attachCookies(
     { email: user.email, id: user._id },
     jwtSecret,
     jwtOptions,
@@ -169,7 +169,7 @@ const loginFacebook = asyncWrapper(async (req, res) => {
     await userService.registration(data.email, password, emailIsActivated);
 
     // Generate JWT and set cookie
-    jwtSignAndSetCookie(
+    attachCookies(
       { email: data.email },
       process.env.JWT_EMAIL_VERIFICATION_SECRET,
       jwtEmailOptions,
@@ -182,7 +182,7 @@ const loginFacebook = asyncWrapper(async (req, res) => {
   }
   if (user) {
     // Generate JWT and set cookie
-    jwtSignAndSetCookie(
+    attachCookies(
       { email: data.email },
       process.env.JWT_EMAIL_VERIFICATION_SECRET,
       jwtEmailOptions,
@@ -237,7 +237,7 @@ const loginSocial = asyncWrapper(async (req, res) => {
     const userFamily = await familyService.findUserFamilyName(user._id);
 
     // Generate JWT and set cookie
-    jwtSignAndSetCookie(
+    attachCookies(
       { email, id: googleUserId },
       process.env.JWT_EMAIL_VERIFICATION_SECRET,
       jwtEmailOptions,
@@ -272,7 +272,7 @@ const logout = asyncWrapper(async (req, res) => {
     res.clearCookie('token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'Lax',
     });
 
     res.status(StatusCodes.OK).json({ message: 'Logged out successfully' });

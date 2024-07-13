@@ -21,7 +21,7 @@ const errorHandlerMiddleware = require('./middleware/error-handler');
 const notFoundMiddleware = require('./middleware/not-found');
 
 const app = express();
-app.use(cookieParser());
+app.use(cookieParser(process.env.JWT_SECRET)); //the secret key should match the one we sign the cookie with
 
 morgan.token(
   'body',
@@ -29,7 +29,12 @@ morgan.token(
 );
 
 // middlewares
-app.use(cors());
+app.use(
+  cors({
+    origin: ['http://localhost:3000'],
+    credentials: true, //allows sending cookies and credentials from client from specified origins
+  }),
+);
 app.use(express.json());
 app.use(morgan('dev'));
 app.use(morgan(':body'));
@@ -39,7 +44,7 @@ app.use('/api', registerRoutes);
 app.use('/api', loginFacebookRoutes);
 app.use('/api', loginSocialRoutes);
 
-app.use(verifyJWT); // All routes after this will require JWT verification
+app.use(verifyJWT); // All routes after this will require JWT fverification
 
 app.use('/api', familyRoutes);
 

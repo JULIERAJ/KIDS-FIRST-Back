@@ -1,7 +1,6 @@
-// utils/authUtils.js
 const jwt = require('jsonwebtoken');
 
-const jwtSignAndSetCookie = (payload, secret, options, res) => {
+const attachCookies = (payload, secret, options, res) => {
   const token = jwt.sign(payload, secret, options);
   const maxAgeSeconds = parseInt(options.expiresIn, 10);
   const maxAgeMilliseconds = maxAgeSeconds * 1000;
@@ -11,13 +10,13 @@ const jwtSignAndSetCookie = (payload, secret, options, res) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     maxAge: maxAgeMilliseconds,
-    sameSite: 'strict',
-    domain: 'localhost', // Adjust domain as needed
+    signed: true,
+    sameSite: 'Lax', // use 'Lax' instead of 'strict' to support social logins
   });
 
   return token;
 };
 
 module.exports = {
-  jwtSignAndSetCookie,
+  attachCookies,
 };

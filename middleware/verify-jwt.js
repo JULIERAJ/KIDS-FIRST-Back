@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 
 const verifyJWT = (req, res, next) => {
   // eslint-disable-next-line prefer-destructuring
-  const token = req.cookies.token;
+  const token = req.signedCookies.token;
 
   if (!token) {
     return res.status(401).json({ message: 'No token provided' });
