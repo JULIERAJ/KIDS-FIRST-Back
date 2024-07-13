@@ -17,6 +17,4 @@ const attachCookies = (payload, secret, options, res) => {
   return token;
 };
 
-module.exports = {
-  attachCookies,
-};
+module.exports = attachCookies;

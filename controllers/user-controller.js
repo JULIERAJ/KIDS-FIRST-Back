@@ -5,7 +5,7 @@ const emailService = require('../service/email-service');
 const familyService = require('../service/family-service');
 const userService = require('../service/user-service');
 const asyncWrapper = require('../middleware/async-wrapper');
-const { attachCookies } = require('../utils/authUtils');
+const attachCookies = require('../utils/authUtils');
 require('dotenv').config({ path: './.env.local' });
 // 1 upper/lower case letter, 1 number, 1 special symbol
 // eslint-disable-next-line max-len
@@ -261,8 +261,9 @@ const loginSocial = asyncWrapper(async (req, res) => {
 });
 
 const logout = asyncWrapper(async (req, res) => {
-  try {
-    if (!req.user) {
+   console.log('Logout function called');
+  if (!req.user) {
+      console.log('No user found in request');
       return res
         .status(StatusCodes.UNAUTHORIZED)
         .json({ message: 'Unauthorized: No user authenticated' });
@@ -272,17 +273,13 @@ const logout = asyncWrapper(async (req, res) => {
     res.clearCookie('token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'Lax',
+      sameSite: 'Lax', 
     });
 
+    console.log('Clearing cookie: Set-Cookie header should be sent now.');
+  console.log('Response headers:', res.getHeaders());
+  
     res.status(StatusCodes.OK).json({ message: 'Logged out successfully' });
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error('Error during logout:', err);
-    res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ message: 'Failed to logout' });
-  }
 });
 
 const requestResetPassword = asyncWrapper(async (req, res) => {
