@@ -35,6 +35,7 @@ app.use('/api', loginRoutes);
 app.use('/api', registerRoutes);
 app.use('/api', loginFacebookRoutes);
 app.use('/api', loginSocialRoutes);
+app.use('/api', forgetPasswordRoutes);
 
 app.use(verifyJWT); // All routes after this will require JWT verification
 
@@ -42,7 +43,6 @@ app.use('/api', familyRoutes);
 
 // app.use('/api', invitationRoutes);
 app.use('/api', memberRoutes);
-app.use('/api', forgetPasswordRoutes);
 app.use('/api', resetPasswordRoutes);
 app.use('/api', logoutRoutes);
 
