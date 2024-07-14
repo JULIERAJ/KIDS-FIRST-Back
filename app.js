@@ -44,6 +44,8 @@ app.use('/api', loginRoutes);
 app.use('/api', registerRoutes);
 app.use('/api', loginFacebookRoutes);
 app.use('/api', loginSocialRoutes);
+app.use('/api', forgetPasswordRoutes);
+app.use('/api', resetPasswordRoutes);
 
 // JWT verification middleware to protect subsequent routes
 app.use(verifyJWT);
@@ -52,8 +54,6 @@ app.use(verifyJWT);
 app.use('/api', familyRoutes);
 // app.use('/api', invitationRoutes);
 app.use('/api', memberRoutes);
-app.use('/api', forgetPasswordRoutes);
-app.use('/api', resetPasswordRoutes);
 app.use('/api', logoutRoutes);
 
 // Error handling middleware
