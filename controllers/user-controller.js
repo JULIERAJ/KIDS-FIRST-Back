@@ -15,8 +15,6 @@ const {
   emailRegExp,
 } = require('../utils/passwordUtils');
 
-// Secret key for JWT
-const jwtSecret = process.env.JWT_SECRET;
 const jwtOptions = { expiresIn: process.env.JWT_LIFETIME };
 const jwtEmailOptions = { expiresIn: process.env.JWT_EMAIL_LIFETIME };
 
@@ -164,12 +162,13 @@ const loginFacebook = asyncWrapper(async (req, res) => {
     await userService.registration(data.email, password, emailIsActivated);
 
     // Generate JWT and set cookie
-    attachCookies(
+    //TODO: to be updated later
+    /*attachCookies(
       { email: data.email },
       process.env.JWT_EMAIL_VERIFICATION_SECRET,
       jwtEmailOptions,
       res,
-    );
+    );*/
 
     res.json({
       email: data.email,
@@ -177,12 +176,13 @@ const loginFacebook = asyncWrapper(async (req, res) => {
   }
   if (user) {
     // Generate JWT and set cookie
-    attachCookies(
+    //TODO: to be updated later
+    /*attachCookies(
       { email: data.email },
       process.env.JWT_EMAIL_VERIFICATION_SECRET,
       jwtEmailOptions,
       res,
-    );
+    );*/
     res.json({
       email: data.email,
     });
@@ -232,12 +232,13 @@ const loginSocial = asyncWrapper(async (req, res) => {
     const userFamily = await familyService.findUserFamilyName(user._id);
 
     // Generate JWT and set cookie
-    attachCookies(
+    //TODO: to be updated later
+    /*attachCookies(
       { email, id: googleUserId },
       process.env.JWT_EMAIL_VERIFICATION_SECRET,
       jwtEmailOptions,
       res,
-    );
+    );*/
 
     // Return response with user and family information
     return res.status(StatusCodes.OK).json({
