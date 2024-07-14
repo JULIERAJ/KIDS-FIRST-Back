@@ -1,6 +1,8 @@
 /* eslint-disable no-console */
 const cors = require('cors');
 const express = require('express');
+// eslint-disable-next-line import/no-extraneous-dependencies
+const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
 const verifyJWT = require('./middleware/verify-jwt');
 const familyRoutes = require('./routes/family');
@@ -17,7 +19,6 @@ const resetPasswordRoutes = require('./routes/reset-password');
 // const { loginSocial } = require('./controllers/user-controller');
 const errorHandlerMiddleware = require('./middleware/error-handler');
 const notFoundMiddleware = require('./middleware/not-found');
-
 const app = express();
 
 morgan.token(
@@ -25,27 +26,37 @@ morgan.token(
   (req) => `\x1b[36m"body": ${JSON.stringify(req.body)}\x1b[0m \n`,
 );
 
-// middlewares
-app.use(cors());
+// Middlewares
+app.use(
+  cors({
+    origin: ['http://localhost:3000'],
+    credentials: true, //allows sending cookies and credentials from client from specified origins
+  }),
+);
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 app.use(morgan('dev'));
 app.use(morgan(':body'));
+app.use(cookieParser(process.env.JWT_SECRET)); //the secret key should match the one we sign the cookie with
 
+// Public routes
 app.use('/api', loginRoutes);
 app.use('/api', registerRoutes);
 app.use('/api', loginFacebookRoutes);
 app.use('/api', loginSocialRoutes);
 app.use('/api', forgetPasswordRoutes);
+app.use('/api', resetPasswordRoutes);
 
-app.use(verifyJWT); // All routes after this will require JWT verification
+// JWT verification middleware to protect subsequent routes
+app.use(verifyJWT);
 
+// Protected routes
 app.use('/api', familyRoutes);
-
 // app.use('/api', invitationRoutes);
 app.use('/api', memberRoutes);
-app.use('/api', resetPasswordRoutes);
 app.use('/api', logoutRoutes);
 
+// Error handling middleware
 app.use(notFoundMiddleware);
 app.use(errorHandlerMiddleware);
 
