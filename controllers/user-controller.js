@@ -190,10 +190,10 @@ const loginFacebook = asyncWrapper(async (req, res) => {
 });
 
 const loginSocial = asyncWrapper(async (req, res) => {
-  const { accessToken, userID } = req.body;
+  const { accessToken } = req.body;
 
   // Handle missing access token
-  if (!accessToken || !userID) {
+  if (!accessToken) {
     return res
       .status(StatusCodes.UNAUTHORIZED)
       .json({ error: 'Access token and email is required' });
@@ -210,7 +210,6 @@ const loginSocial = asyncWrapper(async (req, res) => {
     }
 
     const userData = await response.json();
-
     // Extract relevant user data (email, sub) from Google's response
     const {
       email,
@@ -219,7 +218,7 @@ const loginSocial = asyncWrapper(async (req, res) => {
       family_name: lastName,
     } = userData;
 
-    if (!email || !firstName) {
+    if (!email || !firstName || !lastName) {
       return res
         .status(StatusCodes.BAD_REQUEST)
         .json({ error: 'Invalid user data from Google' });
@@ -227,11 +226,11 @@ const loginSocial = asyncWrapper(async (req, res) => {
     // Attempt to find the user by Google user ID
     let user = await userService.findUser(googleUserId);
     console.log('Google userID:', googleUserId);
-    console.log('User:', user);
+
     if (!user) {
-      const existingUser = await userService.findUser(email);
-      if (existingUser) {
-        user = existingUser;
+      user = await userService.findUser(email);
+      console.log('user', user);
+      if (user) {
         user.googleUserId = googleUserId;
         await user.save();
       } else {
@@ -244,34 +243,9 @@ const loginSocial = asyncWrapper(async (req, res) => {
         userService.activateAccount(user.email);
       }
     }
-
-    // if (!user) {
-    //   return res
-    //     .status(StatusCodes.NOT_FOUND)
-    //     .json({ error: 'User not found' });
-    // }
-
-    // attachCookies(
-    //   { email, id: googleUserId },
-    //   process.env.JWT_EMAIL_VERIFICATION_SECRET,
-    //   { expiresIn: 3600 },
-    //   res,
-    // );
-
-    // If user does not exist, register them (simulating registration for Google login)
-    // if (!user) {
-    //   const password = generatePassword(); // Generate a secure password
-    //   user = await userService.registration(
-    //     firstName,
-    //     lastName,
-    //     email,
-    //     password,
-    //   ); // Register user
-    //   userService.activateAccount(user.email); // Activate user account
-    // }
-
-    // Retrieve family information associated with the user
-    // const userFamily = await familyService.findUserFamilyName(user._id);
+    if (!user || !user._id) {
+      throw new Error('User creation failed');
+    }
 
     // Generate JWT and set cookie
     //TODO: to be updated later
@@ -281,12 +255,13 @@ const loginSocial = asyncWrapper(async (req, res) => {
       jwtEmailOptions,
       res,
     );*/
+    attachCookies({ res, user });
 
     return res.status(StatusCodes.OK).json({
-      email,
-      googleUserId: googleUserId,
-      //   familyId: userFamily.id,
-      //   familyName: userFamily.familyName,
+      email: user.email,
+      googleUserId: user.googleUserId,
+      firstName: user.firstName,
+      lastName: user.lastName,
     });
   } catch (error) {
     // eslint-disable-next-line no-console
