@@ -190,24 +190,20 @@ const loginFacebook = asyncWrapper(async (req, res) => {
 });
 
 const loginSocial = asyncWrapper(async (req, res) => {
-  const { accessToken } = req.body;
+  const { accessToken, userID } = req.body;
 
   // Handle missing access token
-  if (!accessToken) {
+  if (!accessToken || !userID) {
     return res
       .status(StatusCodes.UNAUTHORIZED)
-      .json({ error: 'Access token is required' });
+      .json({ error: 'Access token and email is required' });
   }
 
   try {
     // Fetch user data from Google API
-    const urlGoogleUserInfo = `https://www.googleapis.com/oauth2/v3/userinfo`;
-    const response = await fetch(urlGoogleUserInfo, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    const urlGoogleUserInfo = `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`;
 
+    const response = await fetch(urlGoogleUserInfo);
     // Handle response from Google API
     if (!response.ok) {
       throw new Error('Failed to fetch user data from Google API');
@@ -216,20 +212,66 @@ const loginSocial = asyncWrapper(async (req, res) => {
     const userData = await response.json();
 
     // Extract relevant user data (email, sub) from Google's response
-    const { email, sub: googleUserId } = userData;
+    const {
+      email,
+      sub: googleUserId,
+      given_name: firstName,
+      family_name: lastName,
+    } = userData;
 
+    if (!email || !firstName) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ error: 'Invalid user data from Google' });
+    }
     // Attempt to find the user by Google user ID
     let user = await userService.findUser(googleUserId);
-
-    // If user does not exist, register them (simulating registration for Google login)
+    console.log('Google userID:', googleUserId);
+    console.log('User:', user);
     if (!user) {
-      const password = generatePassword(); // Generate a secure password
-      user = await userService.registration(email, password); // Register user
-      userService.activateAccount(user.email); // Activate user account
+      const existingUser = await userService.findUser(email);
+      if (existingUser) {
+        user = existingUser;
+        user.googleUserId = googleUserId;
+        await user.save();
+      } else {
+        user = await userService.registration(
+          firstName,
+          lastName,
+          email,
+          googleUserId,
+        );
+        userService.activateAccount(user.email);
+      }
     }
 
+    // if (!user) {
+    //   return res
+    //     .status(StatusCodes.NOT_FOUND)
+    //     .json({ error: 'User not found' });
+    // }
+
+    // attachCookies(
+    //   { email, id: googleUserId },
+    //   process.env.JWT_EMAIL_VERIFICATION_SECRET,
+    //   { expiresIn: 3600 },
+    //   res,
+    // );
+
+    // If user does not exist, register them (simulating registration for Google login)
+    // if (!user) {
+    //   const password = generatePassword(); // Generate a secure password
+    //   user = await userService.registration(
+    //     firstName,
+    //     lastName,
+    //     email,
+    //     password,
+    //   ); // Register user
+    //   userService.activateAccount(user.email); // Activate user account
+    // }
+
     // Retrieve family information associated with the user
-    const userFamily = await familyService.findUserFamilyName(user._id);
+    // const userFamily = await familyService.findUserFamilyName(user._id);
 
     // Generate JWT and set cookie
     //TODO: to be updated later
@@ -240,12 +282,11 @@ const loginSocial = asyncWrapper(async (req, res) => {
       res,
     );*/
 
-    // Return response with user and family information
     return res.status(StatusCodes.OK).json({
       email,
-      id: googleUserId,
-      familyId: userFamily.id,
-      familyName: userFamily.familyName,
+      googleUserId: googleUserId,
+      //   familyId: userFamily.id,
+      //   familyName: userFamily.familyName,
     });
   } catch (error) {
     // eslint-disable-next-line no-console
@@ -258,22 +299,22 @@ const loginSocial = asyncWrapper(async (req, res) => {
 
 const logout = asyncWrapper(async (req, res) => {
   if (!req.user) {
-      console.log('No user found in request');
-      return res
-        .status(StatusCodes.UNAUTHORIZED)
-        .json({ message: 'Unauthorized: No user authenticated' });
-    }
+    console.log('No user found in request');
+    return res
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ message: 'Unauthorized: No user authenticated' });
+  }
 
-    // Clear HTTP-only cookie named 'token'
-    res.clearCookie('token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'Lax',
-      signed: true,
-      expires: new Date(0),
-    });
-  
-    res.status(StatusCodes.OK).json({ message: 'Logged out successfully' });
+  // Clear HTTP-only cookie named 'token'
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'Lax',
+    signed: true,
+    expires: new Date(0),
+  });
+
+  res.status(StatusCodes.OK).json({ message: 'Logged out successfully' });
 });
 
 const requestResetPassword = asyncWrapper(async (req, res) => {
