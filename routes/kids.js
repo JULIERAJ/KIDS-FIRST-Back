@@ -8,7 +8,7 @@ const {
 } = require('../controllers/kid-controller');  
 
 
-router.post('/kid', kidController.kid);
+router.post('/kids:id', kidController.createKid);
 router.put('/kid/:id', kidController.updateKid);
 router.delete('/kid/:id', kidController.deleteKid);            
 router.get('/kid', kidController.getAllKids);
