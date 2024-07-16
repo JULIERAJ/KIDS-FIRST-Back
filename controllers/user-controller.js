@@ -258,22 +258,30 @@ const loginSocial = asyncWrapper(async (req, res) => {
 
 const logout = asyncWrapper(async (req, res) => {
   if (!req.user) {
-      console.log('No user found in request');
-      return res
-        .status(StatusCodes.UNAUTHORIZED)
-        .json({ message: 'Unauthorized: No user authenticated' });
-    }
+    console.log('No user found in request');
+    return res
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ message: 'Unauthorized: No user authenticated' });
+  }
 
-    // Clear HTTP-only cookie named 'token'
-    res.clearCookie('token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'Lax',
-      signed: true,
-      expires: new Date(0),
-    });
-  
-    res.status(StatusCodes.OK).json({ message: 'Logged out successfully' });
+  // Clear HTTP-only cookie named 'token'
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'Lax',
+    signed: true,
+    expires: new Date(0),
+  });
+
+  res.status(StatusCodes.OK).json({ message: 'Logged out successfully' });
+});
+
+const checkAuth = asyncWrapper(async (req, res) => {
+  if (!req.user) {
+    return res
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ message: 'Unauthorized: No user authenticated' });
+  }
 });
 
 const requestResetPassword = asyncWrapper(async (req, res) => {
@@ -343,6 +351,7 @@ module.exports = {
   loginFacebook,
   loginSocial,
   logout,
+  checkAuth,
   requestResetPassword,
   resetPasswordActivation,
   resetPasswordUpdates,

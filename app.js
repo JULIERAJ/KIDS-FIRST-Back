@@ -12,6 +12,7 @@ const loginRoutes = require('./routes/login');
 const loginFacebookRoutes = require('./routes/loginFacebook');
 const loginSocialRoutes = require('./routes/loginSocial');
 const logoutRoutes = require('./routes/logout');
+const checkAuthRouter = require('./routes/checkAuth');
 const memberRoutes = require('./routes/member');
 const registerRoutes = require('./routes/register');
 const resetPasswordRoutes = require('./routes/reset-password');
@@ -19,6 +20,7 @@ const resetPasswordRoutes = require('./routes/reset-password');
 // const { loginSocial } = require('./controllers/user-controller');
 const errorHandlerMiddleware = require('./middleware/error-handler');
 const notFoundMiddleware = require('./middleware/not-found');
+
 const app = express();
 
 morgan.token(
@@ -55,6 +57,7 @@ app.use('/api', familyRoutes);
 // app.use('/api', invitationRoutes);
 app.use('/api', memberRoutes);
 app.use('/api', logoutRoutes);
+app.use('/api', checkAuthRouter);
 
 // Error handling middleware
 app.use(notFoundMiddleware);
