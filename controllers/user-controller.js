@@ -20,6 +20,7 @@ const jwtEmailOptions = { expiresIn: process.env.JWT_EMAIL_LIFETIME };
 
 const registration = asyncWrapper(async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
+
   // check that first name is entered
   if (!firstName) {
     return res
@@ -225,11 +226,10 @@ const loginSocial = asyncWrapper(async (req, res) => {
     }
     // Attempt to find the user by Google user ID
     let user = await userService.findUser(googleUserId);
-    console.log('Google userID:', googleUserId);
 
     if (!user) {
       user = await userService.findUser(email);
-      console.log('user', user);
+
       if (user) {
         user.googleUserId = googleUserId;
         await user.save();
