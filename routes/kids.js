@@ -4,14 +4,15 @@ const {
     createKid,
     updateKid,
     getAllKids,
+    getKidById,
     deleteKid,
 } = require('../controllers/kid-controller');  
 
 
-router.post('/kids:id', kidController.createKid);
+router.post('/kid', kidController.createKid);
 router.put('/kid/:id', kidController.updateKid);
 router.delete('/kid/:id', kidController.deleteKid);            
-router.get('/kid', kidController.getAllKids);
-router.get('/kid/:id', kidController.getKid);
+router.get('/kids', kidController.getAllKids);
+router.get('/kid/:id', kidController.getKidById);
 
 module.exports = router;
