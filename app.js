@@ -15,10 +15,12 @@ const logoutRoutes = require('./routes/logout');
 const memberRoutes = require('./routes/member');
 const registerRoutes = require('./routes/register');
 const resetPasswordRoutes = require('./routes/reset-password');
+const kidsRoutes = require('./routes/kids');
 // eslint-disable-next-line no-unused-vars, import/order
 // const { loginSocial } = require('./controllers/user-controller');
 const errorHandlerMiddleware = require('./middleware/error-handler');
 const notFoundMiddleware = require('./middleware/not-found');
+
 const app = express();
 
 morgan.token(
@@ -51,6 +53,7 @@ app.use('/api', resetPasswordRoutes);
 app.use(verifyJWT);
 
 // Protected routes
+app.use('/api/kids', kidsRoutes);
 app.use('/api', familyRoutes);
 // app.use('/api', invitationRoutes);
 app.use('/api', memberRoutes);
