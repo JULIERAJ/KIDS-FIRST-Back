@@ -146,6 +146,8 @@ const login = asyncWrapper(async (req, res) => {
   return res.status(StatusCodes.OK).json({
     email: user.email,
     id: user._id,
+    firstName: user.firstName,
+    lastName: user.lastName,
     familyId: userFamily[0].id,
     familyName: userFamily[0].familyName,
   });
@@ -300,6 +302,9 @@ const checkAuth = asyncWrapper(async (req, res) => {
       .status(StatusCodes.UNAUTHORIZED)
       .json({ message: 'Unauthorized: No user authenticated' });
   }
+  const { user } = req;
+
+  return res.status(StatusCodes.OK).json(user);
 });
 
 const requestResetPassword = asyncWrapper(async (req, res) => {
