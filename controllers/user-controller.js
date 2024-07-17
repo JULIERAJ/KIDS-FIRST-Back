@@ -10,6 +10,7 @@ require('dotenv').config({ path: './.env.local' });
 // 1 upper/lower case letter, 1 number, 1 special symbol
 // eslint-disable-next-line max-len
 const {
+  // eslint-disable-next-line no-unused-vars
   generatePassword,
   passwordRegExp,
   emailRegExp,
@@ -274,6 +275,7 @@ const loginSocial = asyncWrapper(async (req, res) => {
 
 const logout = asyncWrapper(async (req, res) => {
   if (!req.user) {
+    // eslint-disable-next-line no-console
     console.log('No user found in request');
     return res
       .status(StatusCodes.UNAUTHORIZED)
@@ -290,7 +292,6 @@ const logout = asyncWrapper(async (req, res) => {
   });
 
   res.status(StatusCodes.OK).json({ message: 'Logged out successfully' });
-<<<<<<< HEAD
 });
 
 const checkAuth = asyncWrapper(async (req, res) => {
@@ -299,8 +300,6 @@ const checkAuth = asyncWrapper(async (req, res) => {
       .status(StatusCodes.UNAUTHORIZED)
       .json({ message: 'Unauthorized: No user authenticated' });
   }
-=======
->>>>>>> 7b3ff5df41b45e28fe698db7137e1369b07c8f17
 });
 
 const requestResetPassword = asyncWrapper(async (req, res) => {
