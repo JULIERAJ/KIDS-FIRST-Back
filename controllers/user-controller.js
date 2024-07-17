@@ -167,14 +167,17 @@ const loginFacebook = asyncWrapper(async (req, res) => {
       .status(StatusCodes.BAD_REQUEST)
       .json({ error: errorData.error.message });
   }
-  const data = await fetchResponse.json();
+  const {
+    email,
+    first_name: firstName,
+    last_name: lastName,
+  } = await fetchResponse.json();
 
-  if (!data.email || !data.first_name || !data.last_name) {
+  if (!email || !firstName || !lastName) {
     return res
       .status(StatusCodes.BAD_REQUEST)
       .json({ error: 'Invalid user data from Facebook' });
   }
-  const { email, first_name: firstName, last_name: lastName } = data;
 
   let user = await userService.findUser(email);
 
