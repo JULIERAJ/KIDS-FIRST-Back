@@ -24,6 +24,11 @@ const UserSchema = new Schema(
       unique: true,
       lowercase: true,
     },
+    googleUserId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
     password: {
       type: String,
       required: [true, 'Please provide your password'],
