@@ -12,17 +12,17 @@ const registration = async (
   lastName,
   email,
   password,
-  googleUserId,
+  googleUserId = null,
 ) => {
-  const user = new User({ firstName, lastName, email, password, googleUserId });
+  const user = new User({
+    firstName,
+    lastName,
+    email,
+    password,
+    googleUserId,
+    emailIsActivated: false,
+  });
   await user.save();
-
-  //   return {
-  //     id: user._id,
-  //     email: user.email,
-  //     firstName: user.firstName,
-  //     lastName: user.lastName,
-  //   };
   return user;
 };
 

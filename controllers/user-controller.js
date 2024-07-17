@@ -152,42 +152,49 @@ const login = asyncWrapper(async (req, res) => {
 
 const loginFacebook = asyncWrapper(async (req, res) => {
   const { accessToken, userID } = req.body;
-  const urlGraphFacebook = `https://graph.facebook.com/v2.11/${userID}/?fields=id,name,email&access_token=${accessToken}`;
+
+  if (!accessToken || !userID) {
+    return res
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ error: 'Access token and user ID is required' });
+  }
+  const urlGraphFacebook = `https://graph.facebook.com/v20.0/${userID}?fields=id,first_name,last_name,email&access_token=${accessToken}`;
   const fetchResponse = await fetch(urlGraphFacebook, { method: 'GET' });
+
+  if (!fetchResponse.ok) {
+    const errorData = await fetchResponse.json();
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ error: errorData.error.message });
+  }
   const data = await fetchResponse.json();
-  const { email } = data;
-  const user = await userService.findUser(email);
+
+  if (!data.email || !data.first_name || !data.last_name) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ error: 'Invalid user data from Facebook' });
+  }
+  const { email, first_name: firstName, last_name: lastName } = data;
+
+  let user = await userService.findUser(email);
+
   if (!user) {
-    const password = data.email + process.env.JWT_EMAIL_VERIFICATION_SECRET;
-    const emailIsActivated = true;
-    await userService.registration(data.email, password, emailIsActivated);
+    const password = email + process.env.JWT_EMAIL_VERIFICATION_SECRET;
 
-    // Generate JWT and set cookie
-    //TODO: to be updated later
-    /*attachCookies(
-      { email: data.email },
-      process.env.JWT_EMAIL_VERIFICATION_SECRET,
-      jwtEmailOptions,
-      res,
-    );*/
-
-    res.json({
-      email: data.email,
-    });
+    user = await userService.registration(firstName, lastName, email, password);
+    user = await userService.activateAccount(email);
   }
-  if (user) {
-    // Generate JWT and set cookie
-    //TODO: to be updated later
-    /*attachCookies(
-      { email: data.email },
-      process.env.JWT_EMAIL_VERIFICATION_SECRET,
-      jwtEmailOptions,
-      res,
-    );*/
-    res.json({
-      email: data.email,
-    });
+  if (!user || !user._id) {
+    return res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ error: 'User creation failed' });
   }
+  attachCookies({ res, user });
+  return res.status(StatusCodes.OK).json({
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+  });
 });
 
 const loginSocial = asyncWrapper(async (req, res) => {
@@ -200,76 +207,64 @@ const loginSocial = asyncWrapper(async (req, res) => {
       .json({ error: 'Access token and email is required' });
   }
 
-  try {
-    // Fetch user data from Google API
-    const urlGoogleUserInfo = `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`;
+  // Fetch user data from Google API
+  const urlGoogleUserInfo = `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`;
 
-    const response = await fetch(urlGoogleUserInfo);
-    // Handle response from Google API
-    if (!response.ok) {
-      throw new Error('Failed to fetch user data from Google API');
+  const response = await fetch(urlGoogleUserInfo);
+  // Handle response from Google API
+  if (!response.ok) {
+    throw new Error('Failed to fetch user data from Google API');
+  }
+
+  const userData = await response.json();
+  // Extract relevant user data (email, sub) from Google's response
+  const {
+    email,
+    sub: googleUserId,
+    given_name: firstName,
+    family_name: lastName,
+  } = userData;
+
+  if (!email || !firstName || !lastName) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ error: 'Invalid user data from Google' });
+  }
+  // Attempt to find the user by Google user ID
+  let user = await userService.findUser(googleUserId);
+
+  if (!user) {
+    user = await userService.findUser(email);
+
+    if (user) {
+      user.googleUserId = googleUserId;
+      await user.save();
+    } else {
+      const password = email + process.env.JWT_EMAIL_VERIFICATION_SECRET;
+
+      user = await userService.registration(
+        firstName,
+        lastName,
+        email,
+        password,
+        googleUserId,
+      );
+      userService.activateAccount(user.email);
     }
-
-    const userData = await response.json();
-    // Extract relevant user data (email, sub) from Google's response
-    const {
-      email,
-      sub: googleUserId,
-      given_name: firstName,
-      family_name: lastName,
-    } = userData;
-
-    if (!email || !firstName || !lastName) {
-      return res
-        .status(StatusCodes.BAD_REQUEST)
-        .json({ error: 'Invalid user data from Google' });
-    }
-    // Attempt to find the user by Google user ID
-    let user = await userService.findUser(googleUserId);
-
-    if (!user) {
-      user = await userService.findUser(email);
-
-      if (user) {
-        user.googleUserId = googleUserId;
-        await user.save();
-      } else {
-        user = await userService.registration(
-          firstName,
-          lastName,
-          email,
-          googleUserId,
-        );
-        userService.activateAccount(user.email);
-      }
-    }
-    if (!user || !user._id) {
-      throw new Error('User creation failed');
-    }
-
-    // Generate JWT and set cookie
-    //TODO: to be updated later
-    /*attachCookies(
-      { email, id: googleUserId },
-      process.env.JWT_EMAIL_VERIFICATION_SECRET,
-      jwtEmailOptions,
-      res,
-    );*/
-    attachCookies({ res, user });
-
-    return res.status(StatusCodes.OK).json({
-      email: user.email,
-      googleUserId: user.googleUserId,
-      firstName: user.firstName,
-      lastName: user.lastName,
-    });
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Error fetching user data from Google API:', error.message);
+  }
+  if (!user || !user._id) {
     return res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Failed to login with Google' });
+      .json({ error: 'User creation failed' });
   }
+  attachCookies({ res, user });
+
+  return res.status(StatusCodes.OK).json({
+    email: user.email,
+    googleUserId: user.googleUserId,
+    firstName: user.firstName,
+    lastName: user.lastName,
+  });
 });
 
 const logout = asyncWrapper(async (req, res) => {
