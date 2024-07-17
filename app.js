@@ -1,9 +1,11 @@
 /* eslint-disable no-console */
-const cors = require('cors');
 const express = require('express');
+const cors = require('cors');
 // eslint-disable-next-line import/no-extraneous-dependencies
 const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
+// eslint-disable-next-line import/no-extraneous-dependencies
+const helmet = require('helmet');
 const verifyJWT = require('./middleware/verify-jwt');
 const familyRoutes = require('./routes/family');
 const forgetPasswordRoutes = require('./routes/forget-password');
@@ -16,12 +18,15 @@ const checkAuthRouter = require('./routes/checkAuth');
 const memberRoutes = require('./routes/member');
 const registerRoutes = require('./routes/register');
 const resetPasswordRoutes = require('./routes/reset-password');
+const kidsRoutes = require('./routes/kids');
 // eslint-disable-next-line no-unused-vars, import/order
 // const { loginSocial } = require('./controllers/user-controller');
 const errorHandlerMiddleware = require('./middleware/error-handler');
 const notFoundMiddleware = require('./middleware/not-found');
 
 const app = express();
+
+app.use(helmet());
 
 morgan.token(
   'body',
@@ -35,6 +40,12 @@ app.use(
     credentials: true, //allows sending cookies and credentials from client from specified origins
   }),
 );
+app.use((req, res, next) => {
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+  res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(morgan('dev'));
@@ -53,6 +64,7 @@ app.use('/api', resetPasswordRoutes);
 app.use(verifyJWT);
 
 // Protected routes
+app.use('/api/kids', kidsRoutes);
 app.use('/api', familyRoutes);
 // app.use('/api', invitationRoutes);
 app.use('/api', memberRoutes);

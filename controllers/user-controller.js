@@ -20,6 +20,7 @@ const jwtEmailOptions = { expiresIn: process.env.JWT_EMAIL_LIFETIME };
 
 const registration = asyncWrapper(async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
+
   // check that first name is entered
   if (!firstName) {
     return res
@@ -196,40 +197,55 @@ const loginSocial = asyncWrapper(async (req, res) => {
   if (!accessToken) {
     return res
       .status(StatusCodes.UNAUTHORIZED)
-      .json({ error: 'Access token is required' });
+      .json({ error: 'Access token and email is required' });
   }
 
   try {
     // Fetch user data from Google API
-    const urlGoogleUserInfo = `https://www.googleapis.com/oauth2/v3/userinfo`;
-    const response = await fetch(urlGoogleUserInfo, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    const urlGoogleUserInfo = `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`;
 
+    const response = await fetch(urlGoogleUserInfo);
     // Handle response from Google API
     if (!response.ok) {
       throw new Error('Failed to fetch user data from Google API');
     }
 
     const userData = await response.json();
-
     // Extract relevant user data (email, sub) from Google's response
-    const { email, sub: googleUserId } = userData;
+    const {
+      email,
+      sub: googleUserId,
+      given_name: firstName,
+      family_name: lastName,
+    } = userData;
 
+    if (!email || !firstName || !lastName) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ error: 'Invalid user data from Google' });
+    }
     // Attempt to find the user by Google user ID
     let user = await userService.findUser(googleUserId);
 
-    // If user does not exist, register them (simulating registration for Google login)
     if (!user) {
-      const password = generatePassword(); // Generate a secure password
-      user = await userService.registration(email, password); // Register user
-      userService.activateAccount(user.email); // Activate user account
-    }
+      user = await userService.findUser(email);
 
-    // Retrieve family information associated with the user
-    const userFamily = await familyService.findUserFamilyName(user._id);
+      if (user) {
+        user.googleUserId = googleUserId;
+        await user.save();
+      } else {
+        user = await userService.registration(
+          firstName,
+          lastName,
+          email,
+          googleUserId,
+        );
+        userService.activateAccount(user.email);
+      }
+    }
+    if (!user || !user._id) {
+      throw new Error('User creation failed');
+    }
 
     // Generate JWT and set cookie
     //TODO: to be updated later
@@ -239,13 +255,13 @@ const loginSocial = asyncWrapper(async (req, res) => {
       jwtEmailOptions,
       res,
     );*/
+    attachCookies({ res, user });
 
-    // Return response with user and family information
     return res.status(StatusCodes.OK).json({
-      email,
-      id: googleUserId,
-      familyId: userFamily.id,
-      familyName: userFamily.familyName,
+      email: user.email,
+      googleUserId: user.googleUserId,
+      firstName: user.firstName,
+      lastName: user.lastName,
     });
   } catch (error) {
     // eslint-disable-next-line no-console
@@ -274,6 +290,7 @@ const logout = asyncWrapper(async (req, res) => {
   });
 
   res.status(StatusCodes.OK).json({ message: 'Logged out successfully' });
+
 });
 
 const checkAuth = asyncWrapper(async (req, res) => {
