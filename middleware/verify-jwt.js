@@ -14,7 +14,6 @@ const verifyJWT = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded; // Attach decoded token payload to request object
-    next();
   } catch (err) {
     res.status(StatusCodes.UNAUTHORIZED).json({ message: 'Invalid token' });
   }
@@ -25,6 +24,7 @@ const verifyJWT = (req, res, next) => {
       .status(StatusCodes.UNAUTHORIZED)
       .json({ message: 'Unauthorized: No user authenticated' });
   }
+  next();
 };
 
 module.exports = verifyJWT;
