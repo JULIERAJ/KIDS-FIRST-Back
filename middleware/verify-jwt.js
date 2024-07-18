@@ -1,3 +1,4 @@
+const { StatusCodes } = require('http-status-codes');
 const jwt = require('jsonwebtoken');
 
 const verifyJWT = (req, res, next) => {
@@ -5,7 +6,9 @@ const verifyJWT = (req, res, next) => {
   const token = req.signedCookies.token;
 
   if (!token) {
-    return res.status(401).json({ message: 'No token provided' });
+    return res
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ message: 'No token provided' });
   }
 
   try {
@@ -13,7 +16,14 @@ const verifyJWT = (req, res, next) => {
     req.user = decoded; // Attach decoded token payload to request object
     next();
   } catch (err) {
-    res.status(401).json({ message: 'Invalid token' });
+    res.status(StatusCodes.UNAUTHORIZED).json({ message: 'Invalid token' });
+  }
+  if (!req.user) {
+    // eslint-disable-next-line no-console
+    console.log('No user found in request');
+    return res
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ message: 'Unauthorized: No user authenticated' });
   }
 };
 

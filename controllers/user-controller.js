@@ -274,14 +274,6 @@ const loginSocial = asyncWrapper(async (req, res) => {
 });
 
 const logout = asyncWrapper(async (req, res) => {
-  if (!req.user) {
-    // eslint-disable-next-line no-console
-    console.log('No user found in request');
-    return res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ message: 'Unauthorized: No user authenticated' });
-  }
-
   // Clear HTTP-only cookie named 'token'
   res.clearCookie('token', {
     httpOnly: true,
@@ -295,13 +287,10 @@ const logout = asyncWrapper(async (req, res) => {
 });
 
 const checkAuth = asyncWrapper(async (req, res) => {
-  if (!req.user) {
-    return res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ message: 'Unauthorized: No user authenticated' });
-  }
+  res
+    .status(StatusCodes.OK)
+    .json({ message: 'User is authenticated', user: req.user });
 });
-
 const requestResetPassword = asyncWrapper(async (req, res) => {
   const { email } = req.body;
   if (!email) {

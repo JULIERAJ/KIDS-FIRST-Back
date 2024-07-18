@@ -61,15 +61,15 @@ app.use('/api', forgetPasswordRoutes);
 app.use('/api', resetPasswordRoutes);
 
 // JWT verification middleware to protect subsequent routes
-app.use(verifyJWT);
+// app.use(verifyJWT);
 
 // Protected routes
-app.use('/api/kids', kidsRoutes);
-app.use('/api', familyRoutes);
+app.use('/api/kids', verifyJWT, kidsRoutes);
+app.use('/api', verifyJWT, familyRoutes);
 // app.use('/api', invitationRoutes);
-app.use('/api', memberRoutes);
-app.use('/api', logoutRoutes);
-app.use('/api', checkAuthRouter);
+app.use('/api', verifyJWT, memberRoutes);
+app.use('/api', verifyJWT, logoutRoutes);
+app.use('/api', verifyJWT, checkAuthRouter);
 
 // Error handling middleware
 app.use(notFoundMiddleware);
