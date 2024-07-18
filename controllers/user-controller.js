@@ -302,9 +302,6 @@ const checkAuth = asyncWrapper(async (req, res) => {
       .status(StatusCodes.UNAUTHORIZED)
       .json({ message: 'Unauthorized: No user authenticated' });
   }
-  const { user } = req;
-
-  return res.status(StatusCodes.OK).json(user);
 });
 
 const requestResetPassword = asyncWrapper(async (req, res) => {
