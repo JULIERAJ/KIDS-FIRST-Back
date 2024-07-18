@@ -291,6 +291,7 @@ const checkAuth = asyncWrapper(async (req, res) => {
     .status(StatusCodes.OK)
     .json({ message: 'User is authenticated', user: req.user });
 });
+
 const requestResetPassword = asyncWrapper(async (req, res) => {
   const { email } = req.body;
   if (!email) {

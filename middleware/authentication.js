@@ -1,7 +1,7 @@
 const { StatusCodes } = require('http-status-codes');
 const jwt = require('jsonwebtoken');
 
-const verifyJWT = (req, res, next) => {
+const authenticationMiddleware = (req, res, next) => {
   // eslint-disable-next-line prefer-destructuring
   const token = req.signedCookies.token;
 
@@ -28,4 +28,4 @@ const verifyJWT = (req, res, next) => {
   }
 };
 
-module.exports = verifyJWT;
+module.exports = authenticationMiddleware;
