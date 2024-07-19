@@ -10,8 +10,6 @@ require('dotenv').config({ path: './.env.local' });
 // 1 upper/lower case letter, 1 number, 1 special symbol
 // eslint-disable-next-line max-len
 const {
-  // eslint-disable-next-line no-unused-vars
-  generatePassword,
   passwordRegExp,
   emailRegExp,
 } = require('../utils/passwordUtils');
@@ -145,6 +143,8 @@ const login = asyncWrapper(async (req, res) => {
 
   return res.status(StatusCodes.OK).json({
     email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
     id: user._id,
     familyId: userFamily[0].id,
     familyName: userFamily[0].familyName,
@@ -274,14 +274,6 @@ const loginSocial = asyncWrapper(async (req, res) => {
 });
 
 const logout = asyncWrapper(async (req, res) => {
-  if (!req.user) {
-    // eslint-disable-next-line no-console
-    console.log('No user found in request');
-    return res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ message: 'Unauthorized: No user authenticated' });
-  }
-
   // Clear HTTP-only cookie named 'token'
   res.clearCookie('token', {
     httpOnly: true,
@@ -295,11 +287,9 @@ const logout = asyncWrapper(async (req, res) => {
 });
 
 const checkAuth = asyncWrapper(async (req, res) => {
-  if (!req.user) {
-    return res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ message: 'Unauthorized: No user authenticated' });
-  }
+  res
+    .status(StatusCodes.OK)
+    .json({ message: 'User is authenticated', user: req.user });
 });
 
 const requestResetPassword = asyncWrapper(async (req, res) => {

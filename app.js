@@ -6,7 +6,7 @@ const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
 // eslint-disable-next-line import/no-extraneous-dependencies
 const helmet = require('helmet');
-const verifyJWT = require('./middleware/verify-jwt');
+const authenticationMiddleware = require('./middleware/authentication');
 const familyRoutes = require('./routes/family');
 const forgetPasswordRoutes = require('./routes/forget-password');
 // const invitationRoutes = require('./routes/invitation');
@@ -60,16 +60,12 @@ app.use('/api', loginSocialRoutes);
 app.use('/api', forgetPasswordRoutes);
 app.use('/api', resetPasswordRoutes);
 
-// JWT verification middleware to protect subsequent routes
-app.use(verifyJWT);
-
 // Protected routes
-app.use('/api/kids', kidsRoutes);
-app.use('/api', familyRoutes);
-// app.use('/api', invitationRoutes);
-app.use('/api', memberRoutes);
-app.use('/api', logoutRoutes);
-app.use('/api', checkAuthRouter);
+app.use('/api/kids', authenticationMiddleware, kidsRoutes);
+app.use('/api', authenticationMiddleware, familyRoutes);
+app.use('/api', authenticationMiddleware, memberRoutes);
+app.use('/api', authenticationMiddleware, logoutRoutes);
+app.use('/api', authenticationMiddleware, checkAuthRouter);
 
 // Error handling middleware
 app.use(notFoundMiddleware);
