@@ -127,16 +127,22 @@ const login = asyncWrapper(async (req, res) => {
   // Generate JWT and set cookie
   attachCookies({ res, user });
 
-  // when the user login, then find that user's family(s), then push the info  to the front
-  const userFamily = await familyService.findUserFamilyName(user._id);
+  //   // when the user login, then find that user's family(s), then push the info  to the front
+  //   const userFamily = await familyService.findUserFamilyName(user._id);
 
+  //   return res.status(StatusCodes.OK).json({
+  //     email: user.email,
+  //     firstName: user.firstName,
+  //     lastName: user.lastName,
+  //     id: user._id,
+  //     familyId: userFamily[0].id,
+  //     familyName: userFamily[0].familyName,
+  //   });
   return res.status(StatusCodes.OK).json({
     email: user.email,
     firstName: user.firstName,
     lastName: user.lastName,
     id: user._id,
-    familyId: userFamily[0].id,
-    familyName: userFamily[0].familyName,
   });
 });
 
