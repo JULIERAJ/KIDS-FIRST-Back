@@ -1,9 +1,9 @@
 /* eslint-disable no-dupe-keys */
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const cron = require('node-cron');
 
 const User = require('../models/User');
+const { verifyEmailToken } = require('../utils/tokenUtils');
 
 require('dotenv').config({ path: './.env.local' });
 
@@ -41,10 +41,7 @@ const isPasswordCorrect = async (email, password) => {
 };
 
 const emailTokenVerification = async (activationToken) => {
-  const tokenVerified = jwt.verify(
-    activationToken,
-    process.env.JWT_EMAIL_VERIFICATION_SECRET,
-  );
+  const tokenVerified = verifyEmailToken(activationToken);
   return !!tokenVerified;
 };
 

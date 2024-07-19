@@ -1,9 +1,9 @@
 const { StatusCodes } = require('http-status-codes');
-const jwt = require('jsonwebtoken');
 const emailService = require('../service/email-service');
+const userService = require('../service/user-service');
 const invitationService = require('../service/invitation-service');
 const asyncWrapper = require('../middleware/async-wrapper');
-const userService = require('../service/user-service');
+const { createJWTEmail } = require('../utils/tokenUtils');
 
 const invitation = asyncWrapper(async (req, res) => {
   const { inviter, family, inviteeEmail, firstName, inviteeInviteLater } =
@@ -15,11 +15,7 @@ const invitation = asyncWrapper(async (req, res) => {
       family,
     );
 
-    const emailVerificationToken = jwt.sign(
-      { inviteeEmail },
-      process.env.JWT_EMAIL_VERIFICATION_SECRET,
-      { expiresIn: process.env.JWT_EMAIL_LIFETIME },
-    );
+    const emailVerificationToken = createJWTEmail({ inviteeEmail });
 
     await emailService.sendInvitationEmail(
       inviteeEmail,
