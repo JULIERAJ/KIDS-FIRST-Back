@@ -1,5 +1,4 @@
 const { StatusCodes } = require('http-status-codes');
-const jwt = require('jsonwebtoken');
 const fetch = require('node-fetch');
 const emailService = require('../service/email-service');
 const familyService = require('../service/family-service');
@@ -9,13 +8,11 @@ const attachCookies = require('../utils/authUtils');
 require('dotenv').config({ path: './.env.local' });
 // 1 upper/lower case letter, 1 number, 1 special symbol
 // eslint-disable-next-line max-len
+const { passwordRegExp, emailRegExp } = require('../utils/passwordUtils');
 const {
-  passwordRegExp,
-  emailRegExp,
-} = require('../utils/passwordUtils');
-
-const jwtOptions = { expiresIn: process.env.JWT_LIFETIME };
-const jwtEmailOptions = { expiresIn: process.env.JWT_EMAIL_LIFETIME };
+  createJWTEmail,
+  createJWTPasswordReset,
+} = require('../utils/tokenUtils');
 
 const registration = asyncWrapper(async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
@@ -49,11 +46,7 @@ const registration = asyncWrapper(async (req, res) => {
 
   user = await userService.registration(firstName, lastName, email, password);
 
-  const emailVerificationToken = await jwt.sign(
-    { email },
-    process.env.JWT_EMAIL_VERIFICATION_SECRET,
-    jwtEmailOptions,
-  );
+  const emailVerificationToken = await createJWTEmail({ email });
 
   await emailService.sendActivationEmail(email, emailVerificationToken);
 
@@ -104,11 +97,7 @@ const resendActivationEmail = asyncWrapper(async (req, res) => {
       .status(StatusCodes.NOT_FOUND)
       .json({ message: 'User not found' });
   }
-  const emailVerificationToken = await jwt.sign(
-    { email },
-    process.env.JWT_EMAIL_VERIFICATION_SECRET,
-    jwtEmailOptions,
-  );
+  const emailVerificationToken = await createJWTEmail({ email });
   await emailService.sendActivationEmail(email, emailVerificationToken);
   return res
     .status(StatusCodes.OK)
@@ -138,16 +127,22 @@ const login = asyncWrapper(async (req, res) => {
   // Generate JWT and set cookie
   attachCookies({ res, user });
 
-  // when the user login, then find that user's family(s), then push the info  to the front
-  const userFamily = await familyService.findUserFamilyName(user._id);
+  //   // when the user login, then find that user's family(s), then push the info  to the front
+  //   const userFamily = await familyService.findUserFamilyName(user._id);
 
+  //   return res.status(StatusCodes.OK).json({
+  //     email: user.email,
+  //     firstName: user.firstName,
+  //     lastName: user.lastName,
+  //     id: user._id,
+  //     familyId: userFamily[0].id,
+  //     familyName: userFamily[0].familyName,
+  //   });
   return res.status(StatusCodes.OK).json({
     email: user.email,
     firstName: user.firstName,
     lastName: user.lastName,
     id: user._id,
-    familyId: userFamily[0].id,
-    familyName: userFamily[0].familyName,
   });
 });
 
@@ -286,12 +281,6 @@ const logout = asyncWrapper(async (req, res) => {
   res.status(StatusCodes.OK).json({ message: 'Logged out successfully' });
 });
 
-const checkAuth = asyncWrapper(async (req, res) => {
-  res
-    .status(StatusCodes.OK)
-    .json({ message: 'User is authenticated', user: req.user });
-});
-
 const requestResetPassword = asyncWrapper(async (req, res) => {
   const { email } = req.body;
   if (!email) {
@@ -305,11 +294,9 @@ const requestResetPassword = asyncWrapper(async (req, res) => {
       .status(StatusCodes.NOT_FOUND)
       .json({ error: 'No user found with this email address' });
   }
-  const passwordResetVerificationToken = await jwt.sign(
-    { email },
-    process.env.JWT_EMAIL_VERIFICATION_SECRET,
-    jwtOptions,
-  );
+  const passwordResetVerificationToken = await createJWTPasswordReset({
+    email,
+  });
   await emailService.sendResetPasswordEmail(
     email,
     passwordResetVerificationToken,
@@ -359,7 +346,6 @@ module.exports = {
   loginFacebook,
   loginSocial,
   logout,
-  checkAuth,
   requestResetPassword,
   resetPasswordActivation,
   resetPasswordUpdates,

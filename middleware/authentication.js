@@ -1,31 +1,30 @@
 const { StatusCodes } = require('http-status-codes');
-const jwt = require('jsonwebtoken');
+const { UnauthenticatedError } = require('../errors/customErrors');
+const User = require('../models/User');
+const { verifyAccessToken } = require('../utils/tokenUtils');
 
-const authenticationMiddleware = (req, res, next) => {
+const authenticateUser = async (req, res, next) => {
   // eslint-disable-next-line prefer-destructuring
-  const token = req.signedCookies.token;
+  const { token } = req.signedCookies;
 
   if (!token) {
-    return res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ message: 'No token provided' });
+    return new UnauthenticatedError('Authentication invalid');
   }
-
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // Attach decoded token payload to request object
-
-    if (!req.user) {
-      // eslint-disable-next-line no-console
-      console.log('No user found in request');
+    const decoded = verifyAccessToken(token);
+    const user = await User.findById(decoded.userId).select('-password');
+    console.log('user', user);
+    if (!user) {
       return res
-        .status(StatusCodes.UNAUTHORIZED)
-        .json({ message: 'Unauthorized: No user authenticated' });
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ message: 'User not found' });
     }
+    req.user = user; // Attach user obj to request
+
     next();
   } catch (err) {
-    res.status(StatusCodes.UNAUTHORIZED).json({ message: 'Invalid token' });
+    next(new UnauthenticatedError('Authentication invalid'));
   }
 };
 
-module.exports = authenticationMiddleware;
+module.exports = authenticateUser;

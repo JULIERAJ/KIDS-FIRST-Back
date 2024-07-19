@@ -1,12 +1,8 @@
-const jwt = require('jsonwebtoken');
+const { createJWT } = require('./tokenUtils');
 
 const attachCookies = ({ res, user }) => {
-  const secret = process.env.JWT_SECRET;
-  const jwtLifetime = process.env.JWT_LIFETIME;
-
-  const token = jwt.sign({ userId: user._id }, secret, {
-    expiresIn: jwtLifetime,
-  });
+  const tokenPayload = { userId: user._id };
+  const token = createJWT(tokenPayload);
 
   // Set the cookie expiration to 1 week
   const maxAgeMilliseconds = 1000 * 60 * 60 * 24 * 7;
