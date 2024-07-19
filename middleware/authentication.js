@@ -1,7 +1,9 @@
+const { StatusCodes } = require('http-status-codes');
 const { UnauthenticatedError } = require('../errors/customErrors');
+const User = require('../models/User');
 const { verifyAccessToken } = require('../utils/tokenUtils');
 
-const authenticateUser = (req, res, next) => {
+const authenticateUser = async (req, res, next) => {
   // eslint-disable-next-line prefer-destructuring
   const { token } = req.signedCookies;
 
@@ -10,7 +12,14 @@ const authenticateUser = (req, res, next) => {
   }
   try {
     const decoded = verifyAccessToken(token);
-    req.user = decoded; // Attach decoded token payload to request object
+    const user = await User.findById(decoded.userId).select('-password');
+    console.log('user', user);
+    if (!user) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ message: 'User not found' });
+    }
+    req.user = user; // Attach user obj to request
 
     next();
   } catch (err) {
