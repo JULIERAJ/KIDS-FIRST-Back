@@ -10,8 +10,8 @@ const authenticateUser = (req, res, next) => {
   }
   try {
     const decoded = verifyAccessToken(token);
-    console.log('decoded', decoded);
     req.user = decoded; // Attach decoded token payload to request object
+    console.log('decoded', req.user);
 
     next();
   } catch (err) {

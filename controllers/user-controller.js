@@ -275,12 +275,6 @@ const logout = asyncWrapper(async (req, res) => {
   res.status(StatusCodes.OK).json({ message: 'Logged out successfully' });
 });
 
-const checkAuth = asyncWrapper(async (req, res) => {
-  res
-    .status(StatusCodes.OK)
-    .json({ message: 'User is authenticated', user: req.user });
-});
-
 const requestResetPassword = asyncWrapper(async (req, res) => {
   const { email } = req.body;
   if (!email) {
@@ -346,7 +340,6 @@ module.exports = {
   loginFacebook,
   loginSocial,
   logout,
-  checkAuth,
   requestResetPassword,
   resetPasswordActivation,
   resetPasswordUpdates,

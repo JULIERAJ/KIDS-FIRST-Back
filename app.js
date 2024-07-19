@@ -7,7 +7,7 @@ const morgan = require('morgan');
 // eslint-disable-next-line import/no-extraneous-dependencies
 const helmet = require('helmet');
 // eslint-disable-next-line import/no-extraneous-dependencies
-const mongoSanitize = require('express-mongo-sanitize');
+// const mongoSanitize = require('express-mongo-sanitize');
 const authenticateUser = require('./middleware/authentication');
 const familyRoutes = require('./routes/family');
 const forgetPasswordRoutes = require('./routes/forget-password');
@@ -16,7 +16,6 @@ const loginRoutes = require('./routes/login');
 const loginFacebookRoutes = require('./routes/loginFacebook');
 const loginSocialRoutes = require('./routes/loginSocial');
 const logoutRoutes = require('./routes/logout');
-const checkAuthRouter = require('./routes/checkAuth');
 const memberRoutes = require('./routes/member');
 const registerRoutes = require('./routes/register');
 const resetPasswordRoutes = require('./routes/reset-password');
@@ -29,7 +28,7 @@ const notFoundMiddleware = require('./middleware/not-found');
 const app = express();
 
 app.use(helmet());
-app.use(mongoSanitize());
+// app.use(mongoSanitize());
 
 morgan.token(
   'body',
@@ -68,7 +67,6 @@ app.use('/api/kids', authenticateUser, kidsRoutes);
 app.use('/api', authenticateUser, familyRoutes);
 app.use('/api', authenticateUser, memberRoutes);
 app.use('/api', authenticateUser, logoutRoutes);
-app.use('/api', authenticateUser, checkAuthRouter);
 
 // Error handling middleware
 app.use(notFoundMiddleware);
