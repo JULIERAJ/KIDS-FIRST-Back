@@ -3,7 +3,7 @@ const { verifyAccessToken } = require('../utils/tokenUtils');
 
 const authenticateUser = (req, res, next) => {
   // eslint-disable-next-line prefer-destructuring
-  const { token } = req.cookies;
+  const { token } = req.signedCookies;
 
   if (!token) {
     return new UnauthenticatedError('Authentication invalid');
@@ -11,7 +11,6 @@ const authenticateUser = (req, res, next) => {
   try {
     const decoded = verifyAccessToken(token);
     req.user = decoded; // Attach decoded token payload to request object
-    console.log('decoded', req.user);
 
     next();
   } catch (err) {
