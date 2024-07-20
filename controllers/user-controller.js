@@ -17,7 +17,7 @@ const {
   resetAttempts,
 } = require('../service/attempt-service');
 
-const LOCK_TIME = parseInt(process.env.LOCK_TIME, 10) || 60 * 60 * 100;
+const LOCK_TIME = parseInt(process.env.LOCK_TIME, 10) || 60 * 60 * 1000;
 const registration = asyncWrapper(async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
 
