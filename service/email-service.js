@@ -69,22 +69,43 @@ const sendGeneralEmail = async (
   await sendEmail(email, subject, htmlContent);
 };
 
+// function that sends an activational email
+
+const sendActivationalEmail = async (
+  email,
+  subject,
+  greetingText,
+  messageText,
+  endText,
+  buttonText,
+  href,
+) => {
+  const htmlContent = await renderTemplate('activate-email', {
+    greetingText,
+    messageText,
+    endText,
+    buttonText,
+    href,
+  });
+  await sendEmail(email, subject, htmlContent);
+};
+
 //function that sends verification email with the link
 const sendActivationEmail = async (email, emailVerificationToken) => {
   const href = `${process.env.CLIENT_URL}/activate/${email}/${emailVerificationToken}`;
   const subject = 'KIDS FIRST Account Verification';
   const greetingText = 'Hello and welcome to KIDS FIRST!';
   const messageText =
-    'To continue the registration process, please click Verify My Account.';
-  const endText = "If you don't use this link within 1 hour, it will expire.";
-  const buttonText = 'Verify My Account';
-  await sendGeneralEmail(
+    'To continue the registration process, please click "Verify my email".';
+  const endText = 'This link will expire after 60 minutes.';
+  const buttonText = 'Verify my email';
+  await sendActivationalEmail(
     email,
     subject,
     greetingText,
     messageText,
-    buttonText,
     endText,
+    buttonText,
     href,
   );
 };
