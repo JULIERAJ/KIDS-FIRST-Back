@@ -13,6 +13,7 @@ const LoginAttemptSchema = new Schema({
     default: 0,
     required: true,
   },
+  lockUntil: { type: Date },
 });
 
 module.exports = mongoose.model('LoginAttempt', LoginAttemptSchema);
