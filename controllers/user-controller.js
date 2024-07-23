@@ -1,7 +1,6 @@
 const { StatusCodes } = require('http-status-codes');
 const fetch = require('node-fetch');
 const emailService = require('../service/email-service');
-const familyService = require('../service/family-service');
 const userService = require('../service/user-service');
 const asyncWrapper = require('../middleware/async-wrapper');
 const attachCookies = require('../utils/authUtils');
@@ -13,7 +12,12 @@ const {
   createJWTEmail,
   createJWTPasswordReset,
 } = require('../utils/tokenUtils');
+const {
+  incrementAttempts,
+  resetAttempts,
+} = require('../service/attempt-service');
 
+const LOCK_TIME = parseInt(process.env.LOCK_TIME, 10) || 60 * 60 * 1000;
 const registration = asyncWrapper(async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
 
@@ -118,26 +122,36 @@ const login = asyncWrapper(async (req, res) => {
   }
   const isPasswordCorrect =
     password && (await userService.isPasswordCorrect(email, password));
+
   if (!isPasswordCorrect) {
+    const attemptResult = await incrementAttempts(user._id);
+    console.log('attempt:', attemptResult.attempts);
+
+    if (attemptResult.isLocked) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+          error: `Account temporarily locked due to failed login attempts. Please wait ${LOCK_TIME / 60000} minutes or use \nForgot Password`,
+        });
+      }
+
+    if (attemptResult.lastAttemptWarning) {
+      console.log(`last login attempt`);
+
+      return res.status(StatusCodes.UNAUTHORIZED).json({
+        error: `Invalid password. One more attempt left before your account will be locked for ${LOCK_TIME / 60000} minutes`,
+      });
+    }
     return res
       .status(StatusCodes.UNAUTHORIZED)
-      .json({ error: 'Password is not correct' });
+      .json({ error: 'Invalid password or email address' });
   }
+
+  // reset attempts once user login successfully
+  await resetAttempts(user._id);
+  console.log(`Logged in successfully. Resetting login attempts.`);
 
   // Generate JWT and set cookie
   attachCookies({ res, user });
 
-  //   // when the user login, then find that user's family(s), then push the info  to the front
-  //   const userFamily = await familyService.findUserFamilyName(user._id);
-
-  //   return res.status(StatusCodes.OK).json({
-  //     email: user.email,
-  //     firstName: user.firstName,
-  //     lastName: user.lastName,
-  //     id: user._id,
-  //     familyId: userFamily[0].id,
-  //     familyName: userFamily[0].familyName,
-  //   });
   return res.status(StatusCodes.OK).json({
     email: user.email,
     firstName: user.firstName,
@@ -301,6 +315,7 @@ const requestResetPassword = asyncWrapper(async (req, res) => {
     email,
     passwordResetVerificationToken,
   );
+
   return res.status(StatusCodes.OK).json({
     message: `Reset password link sent to ${email}`,
   });
@@ -334,6 +349,8 @@ const resetPasswordUpdates = asyncWrapper(async (req, res) => {
   }
   const user = await userService.updateUserPassword(email, password);
   await user.save();
+  await resetAttempts(user._id);
+
   return res
     .status(StatusCodes.OK)
     .json({ msg: 'Password updated successfully' });
