@@ -1,7 +1,6 @@
 const { StatusCodes } = require('http-status-codes');
 const fetch = require('node-fetch');
 const emailService = require('../service/email-service');
-const familyService = require('../service/family-service');
 const userService = require('../service/user-service');
 const asyncWrapper = require('../middleware/async-wrapper');
 const attachCookies = require('../utils/authUtils');
@@ -74,18 +73,10 @@ const accountActivation = asyncWrapper(async (req, res) => {
       .status(StatusCodes.BAD_REQUEST)
       .json({ message: 'Activation link is not correct' });
   }
-  const userData = await userService.activateAccount(email);
-  // autogenerate family name and save it in db
-  const familyName = familyService.generateFamilyName();
-  const familyNameRegistration = await familyService.familyRegistration(
-    familyName,
-    userData._id,
-  );
   return res.status(StatusCodes.OK).json({
     message: 'The account is successfully activated',
     email: userData.email,
-    emailIsActivated: userData.emailIsActivated,
-    familyName: familyNameRegistration.familyName,
+    emailIsActivated: userData.emailIsActivated
   });
 });
 
