@@ -56,6 +56,7 @@ const registration = asyncWrapper(async (req, res) => {
     emailIsActivated: user.emailIsActivated,
   });
 });
+
 const accountActivation = asyncWrapper(async (req, res) => {
   const activationToken = req.params.emailVerificationToken;
   const { email } = req.params;
@@ -105,7 +106,7 @@ const resendActivationEmail = asyncWrapper(async (req, res) => {
 });
 
 const login = asyncWrapper(async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, rememberMe } = req.body;
   const isEmailCorrect = email && emailRegExp.test(email);
   if (!isEmailCorrect) {
     return res
@@ -125,7 +126,7 @@ const login = asyncWrapper(async (req, res) => {
   }
 
   // Generate JWT and set cookie
-  attachCookies({ res, user });
+  attachCookies({ res, user, rememberMe });
 
   //   // when the user login, then find that user's family(s), then push the info  to the front
   //   const userFamily = await familyService.findUserFamilyName(user._id);
