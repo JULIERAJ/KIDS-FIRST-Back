@@ -128,17 +128,6 @@ const login = asyncWrapper(async (req, res) => {
   // Generate JWT and set cookie
   attachCookies({ res, user, rememberMe });
 
-  //   // when the user login, then find that user's family(s), then push the info  to the front
-  //   const userFamily = await familyService.findUserFamilyName(user._id);
-
-  //   return res.status(StatusCodes.OK).json({
-  //     email: user.email,
-  //     firstName: user.firstName,
-  //     lastName: user.lastName,
-  //     id: user._id,
-  //     familyId: userFamily[0].id,
-  //     familyName: userFamily[0].familyName,
-  //   });
   return res.status(StatusCodes.OK).json({
     email: user.email,
     firstName: user.firstName,
@@ -158,29 +147,13 @@ const loginFacebook = asyncWrapper(async (req, res) => {
     const password = data.email + process.env.JWT_EMAIL_VERIFICATION_SECRET;
     const emailIsActivated = true;
     await userService.registration(data.email, password, emailIsActivated);
-
-    // Generate JWT and set cookie
-    //TODO: to be updated later
-    /*attachCookies(
-      { email: data.email },
-      process.env.JWT_EMAIL_VERIFICATION_SECRET,
-      jwtEmailOptions,
-      res,
-    );*/
-
+    attachCookies({ res, user, rememberMe: true });
     res.json({
       email: data.email,
     });
   }
   if (user) {
-    // Generate JWT and set cookie
-    //TODO: to be updated later
-    /*attachCookies(
-      { email: data.email },
-      process.env.JWT_EMAIL_VERIFICATION_SECRET,
-      jwtEmailOptions,
-      res,
-    );*/
+    attachCookies({ res, user, rememberMe: true });
     res.json({
       email: data.email,
     });
@@ -244,15 +217,7 @@ const loginSocial = asyncWrapper(async (req, res) => {
       throw new Error('User creation failed');
     }
 
-    // Generate JWT and set cookie
-    //TODO: to be updated later
-    /*attachCookies(
-      { email, id: googleUserId },
-      process.env.JWT_EMAIL_VERIFICATION_SECRET,
-      jwtEmailOptions,
-      res,
-    );*/
-    attachCookies({ res, user });
+    attachCookies({ res, user, rememberMe: true });
 
     return res.status(StatusCodes.OK).json({
       email: user.email,
