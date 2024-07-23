@@ -57,6 +57,7 @@ const invitationAccepted = asyncWrapper(async (req, res) => {
   const emailToken = req.params.emailVerificationToken;
   const { email } = req.params;
 
+  // eslint-disable-next-line no-shadow
   const invitation = await invitationService.findInviteeEmail(email);
 
   if (invitation.invitationAccepted === true) {

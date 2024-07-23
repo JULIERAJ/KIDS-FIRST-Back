@@ -8,18 +8,10 @@ const morgan = require('morgan');
 const helmet = require('helmet');
 // eslint-disable-next-line import/no-extraneous-dependencies
 // const mongoSanitize = require('express-mongo-sanitize');
-const authenticateUser = require('./middleware/authentication');
-const familyRoutes = require('./routes/family');
-const forgetPasswordRoutes = require('./routes/forget-password');
-// const invitationRoutes = require('./routes/invitation');
-const loginRoutes = require('./routes/login');
-const loginFacebookRoutes = require('./routes/loginFacebook');
-const loginSocialRoutes = require('./routes/loginSocial');
-const logoutRoutes = require('./routes/logout');
-const memberRoutes = require('./routes/member');
-const registerRoutes = require('./routes/register');
-const resetPasswordRoutes = require('./routes/reset-password');
+
 const kidsRoutes = require('./routes/kids');
+const userRoutes = require('./routes/user');
+
 // eslint-disable-next-line no-unused-vars, import/order
 // const { loginSocial } = require('./controllers/user-controller');
 const errorHandlerMiddleware = require('./middleware/error-handler');
@@ -54,19 +46,9 @@ app.use(morgan('dev'));
 app.use(morgan(':body'));
 app.use(cookieParser(process.env.JWT_SECRET)); //the secret key should match the one we sign the cookie with
 
-// Public routes
-app.use('/api', loginRoutes);
-app.use('/api', registerRoutes);
-app.use('/api', loginFacebookRoutes);
-app.use('/api', loginSocialRoutes);
-app.use('/api', forgetPasswordRoutes);
-app.use('/api', resetPasswordRoutes);
-
-// Protected routes
-app.use('/api/kids', authenticateUser, kidsRoutes);
-app.use('/api', authenticateUser, familyRoutes);
-app.use('/api', authenticateUser, memberRoutes);
-app.use('/api', authenticateUser, logoutRoutes);
+// Routes
+app.use('/api', userRoutes);
+app.use('/api/kids', kidsRoutes);
 
 // Error handling middleware
 app.use(notFoundMiddleware);
