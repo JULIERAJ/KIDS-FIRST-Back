@@ -147,53 +147,86 @@ const login = asyncWrapper(async (req, res) => {
 });
 
 const loginFacebook = asyncWrapper(async (req, res) => {
-  const { accessToken, userID } = req.body;
+  try {
+    const { accessToken, userID } = req.body;
+    console.log('Received data:', { accessToken, userID });
 
-  if (!accessToken || !userID) {
-    return res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ error: 'Access token and user ID is required' });
-  }
-  const urlGraphFacebook = `https://graph.facebook.com/v20.0/${userID}?fields=id,first_name,last_name,email&access_token=${accessToken}`;
-  const fetchResponse = await fetch(urlGraphFacebook, { method: 'GET' });
+    if (!accessToken || !userID) {
+      return res
+        .status(StatusCodes.UNAUTHORIZED)
+        .json({ error: 'Access token and user ID are required' });
+    }
 
-  if (!fetchResponse.ok) {
-    const errorData = await fetchResponse.json();
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ error: errorData.error.message });
-  }
-  const {
-    email,
-    first_name: firstName,
-    last_name: lastName,
-  } = await fetchResponse.json();
+    const urlGraphFacebook = `https://graph.facebook.com/v11.0/${userID}?fields=id,first_name,last_name,email&access_token=${accessToken}`;
+    const fetchResponse = await fetch(urlGraphFacebook, { method: 'GET' });
+    const data = await fetchResponse.json();
 
-  if (!email || !firstName || !lastName) {
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ error: 'Invalid user data from Facebook' });
-  }
+    if (!fetchResponse.ok) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ error: data.error.message });
+    }
 
-  let user = await userService.findUser(email);
+    const {
+      id: facebookUserId,
+      email,
+      first_name: firstName,
+      last_name: lastName,
+    } = data;
 
-  if (!user) {
-    const password = email + process.env.JWT_EMAIL_VERIFICATION_SECRET;
+    if (!email || !firstName || !lastName) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ error: 'Invalid user data from Facebook' });
+    }
 
-    user = await userService.registration(firstName, lastName, email, password);
-    user = await userService.activateAccount(email);
-  }
-  if (!user || !user._id) {
+    let user = await userService.findUser(facebookUserId);
+
+    if (!user) {
+      user = await userService.findUser(email);
+      if (user) {
+        if (user.facebookUserId && user.facebookUserId !== facebookUserId) {
+          return res.status(StatusCodes.CONFLICT).json({
+            error:
+              'This email is already associated with a different Facebook account',
+          });
+        }
+        user.facebookUserId = facebookUserId;
+        await user.save();
+      } else {
+        const password = email + process.env.JWT_EMAIL_VERIFICATION_SECRET;
+
+        user = await userService.registration(
+          firstName,
+          lastName,
+          email,
+          password,
+          null, // googleUserId
+          facebookUserId,
+        );
+        userService.activateAccount(email);
+      }
+    }
+
+    if (!user || !user._id) {
+      return res
+        .status(StatusCodes.INTERNAL_SERVER_ERROR)
+        .json({ error: 'User creation failed' });
+    }
+
+    attachCookies({ res, user });
+    return res.status(StatusCodes.OK).json({
+      email: user.email,
+      facebookUserId: user.facebookUserId,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    });
+  } catch (error) {
+    console.error('Error during Facebook login:', error);
     return res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ error: 'User creation failed' });
+      .json({ error: 'Internal Server Error' });
   }
-  attachCookies({ res, user });
-  return res.status(StatusCodes.OK).json({
-    email: user.email,
-    firstName: user.firstName,
-    lastName: user.lastName,
-  });
 });
 
 const loginSocial = asyncWrapper(async (req, res) => {

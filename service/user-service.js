@@ -13,6 +13,7 @@ const registration = async (
   email,
   password,
   googleUserId = null,
+  facebookUserId = null,
 ) => {
   const user = new User({
     firstName,
@@ -20,6 +21,7 @@ const registration = async (
     email,
     password,
     googleUserId,
+    facebookUserId,
     emailIsActivated: false,
   });
   await user.save();
