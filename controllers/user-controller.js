@@ -73,6 +73,7 @@ const accountActivation = asyncWrapper(async (req, res) => {
       .status(StatusCodes.BAD_REQUEST)
       .json({ message: 'Activation link is not correct' });
   }
+  const userData = await userService.activateAccount(email);
   return res.status(StatusCodes.OK).json({
     message: 'The account is successfully activated',
     email: userData.email,
