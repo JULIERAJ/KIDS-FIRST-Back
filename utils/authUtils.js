@@ -1,11 +1,21 @@
 const { createJWT } = require('./tokenUtils');
 
-const attachCookies = ({ res, user }) => {
+const attachCookies = ({ res, user, rememberMe = false }) => {
   const tokenPayload = { userId: user._id };
   const token = createJWT(tokenPayload);
 
-  // Set the cookie expiration to 1 week
-  const maxAgeMilliseconds = 1000 * 60 * 60 * 24 * 7;
+  const rememberMeExpirationDays = parseInt(
+    process.env.REMEMBER_ME_EXPIRATION_DAYS,
+    10,
+  ) || 30;
+  const defaultExpirationDays = parseInt(
+    process.env.DEFAULT_EXPIRATION_DAYS,
+    10,
+  ) || 1;
+
+  const maxAgeMilliseconds = rememberMe
+    ? 1000 * 60 * 60 * 24 * rememberMeExpirationDays
+    : 1000 * 60 * 60 * 24 * defaultExpirationDays;
 
   res.cookie('token', token, {
     httpOnly: true,

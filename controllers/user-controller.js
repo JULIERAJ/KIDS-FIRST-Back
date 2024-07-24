@@ -1,7 +1,6 @@
 const { StatusCodes } = require('http-status-codes');
 const fetch = require('node-fetch');
 const emailService = require('../service/email-service');
-const familyService = require('../service/family-service');
 const userService = require('../service/user-service');
 const asyncWrapper = require('../middleware/async-wrapper');
 const attachCookies = require('../utils/authUtils');
@@ -13,7 +12,12 @@ const {
   createJWTEmail,
   createJWTPasswordReset,
 } = require('../utils/tokenUtils');
+const {
+  incrementAttempts,
+  resetAttempts,
+} = require('../service/attempt-service');
 
+const LOCK_TIME = parseInt(process.env.LOCK_TIME, 10) || 60 * 60 * 1000;
 const registration = asyncWrapper(async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
 
@@ -56,6 +60,7 @@ const registration = asyncWrapper(async (req, res) => {
     emailIsActivated: user.emailIsActivated,
   });
 });
+
 const accountActivation = asyncWrapper(async (req, res) => {
   const activationToken = req.params.emailVerificationToken;
   const { email } = req.params;
@@ -75,17 +80,10 @@ const accountActivation = asyncWrapper(async (req, res) => {
       .json({ message: 'Activation link is not correct' });
   }
   const userData = await userService.activateAccount(email);
-  // autogenerate family name and save it in db
-  const familyName = familyService.generateFamilyName();
-  const familyNameRegistration = await familyService.familyRegistration(
-    familyName,
-    userData._id,
-  );
   return res.status(StatusCodes.OK).json({
     message: 'The account is successfully activated',
     email: userData.email,
-    emailIsActivated: userData.emailIsActivated,
-    familyName: familyNameRegistration.familyName,
+    emailIsActivated: userData.emailIsActivated
   });
 });
 
@@ -105,7 +103,7 @@ const resendActivationEmail = asyncWrapper(async (req, res) => {
 });
 
 const login = asyncWrapper(async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, rememberMe } = req.body;
   const isEmailCorrect = email && emailRegExp.test(email);
   if (!isEmailCorrect) {
     return res
@@ -118,26 +116,36 @@ const login = asyncWrapper(async (req, res) => {
   }
   const isPasswordCorrect =
     password && (await userService.isPasswordCorrect(email, password));
+
   if (!isPasswordCorrect) {
+    const attemptResult = await incrementAttempts(user._id);
+    console.log('attempt:', attemptResult.attempts);
+
+    if (attemptResult.isLocked) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+          error: `Account temporarily locked due to failed login attempts. Please wait ${LOCK_TIME / 60000} minutes or use \nForgot Password`,
+        });
+      }
+
+    if (attemptResult.lastAttemptWarning) {
+      console.log(`last login attempt`);
+
+      return res.status(StatusCodes.UNAUTHORIZED).json({
+        error: `Invalid password. One more attempt left before your account will be locked for ${LOCK_TIME / 60000} minutes`,
+      });
+    }
     return res
       .status(StatusCodes.UNAUTHORIZED)
-      .json({ error: 'Password is not correct' });
+      .json({ error: 'Invalid password or email address' });
   }
 
+  // reset attempts once user login successfully
+  await resetAttempts(user._id);
+  console.log(`Logged in successfully. Resetting login attempts.`);
+
   // Generate JWT and set cookie
-  attachCookies({ res, user });
+  attachCookies({ res, user, rememberMe });
 
-  //   // when the user login, then find that user's family(s), then push the info  to the front
-  //   const userFamily = await familyService.findUserFamilyName(user._id);
-
-  //   return res.status(StatusCodes.OK).json({
-  //     email: user.email,
-  //     firstName: user.firstName,
-  //     lastName: user.lastName,
-  //     id: user._id,
-  //     familyId: userFamily[0].id,
-  //     familyName: userFamily[0].familyName,
-  //   });
   return res.status(StatusCodes.OK).json({
     email: user.email,
     firstName: user.firstName,
@@ -157,29 +165,13 @@ const loginFacebook = asyncWrapper(async (req, res) => {
     const password = data.email + process.env.JWT_EMAIL_VERIFICATION_SECRET;
     const emailIsActivated = true;
     await userService.registration(data.email, password, emailIsActivated);
-
-    // Generate JWT and set cookie
-    //TODO: to be updated later
-    /*attachCookies(
-      { email: data.email },
-      process.env.JWT_EMAIL_VERIFICATION_SECRET,
-      jwtEmailOptions,
-      res,
-    );*/
-
+    attachCookies({ res, user, rememberMe: true });
     res.json({
       email: data.email,
     });
   }
   if (user) {
-    // Generate JWT and set cookie
-    //TODO: to be updated later
-    /*attachCookies(
-      { email: data.email },
-      process.env.JWT_EMAIL_VERIFICATION_SECRET,
-      jwtEmailOptions,
-      res,
-    );*/
+    attachCookies({ res, user, rememberMe: true });
     res.json({
       email: data.email,
     });
@@ -243,15 +235,7 @@ const loginSocial = asyncWrapper(async (req, res) => {
       throw new Error('User creation failed');
     }
 
-    // Generate JWT and set cookie
-    //TODO: to be updated later
-    /*attachCookies(
-      { email, id: googleUserId },
-      process.env.JWT_EMAIL_VERIFICATION_SECRET,
-      jwtEmailOptions,
-      res,
-    );*/
-    attachCookies({ res, user });
+    attachCookies({ res, user, rememberMe: true });
 
     return res.status(StatusCodes.OK).json({
       email: user.email,
@@ -301,6 +285,7 @@ const requestResetPassword = asyncWrapper(async (req, res) => {
     email,
     passwordResetVerificationToken,
   );
+
   return res.status(StatusCodes.OK).json({
     message: `Reset password link sent to ${email}`,
   });
@@ -334,6 +319,8 @@ const resetPasswordUpdates = asyncWrapper(async (req, res) => {
   }
   const user = await userService.updateUserPassword(email, password);
   await user.save();
+  await resetAttempts(user._id);
+
   return res
     .status(StatusCodes.OK)
     .json({ msg: 'Password updated successfully' });

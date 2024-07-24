@@ -12,8 +12,6 @@ const helmet = require('helmet');
 const kidsRoutes = require('./routes/kids');
 const userRoutes = require('./routes/user');
 
-// eslint-disable-next-line no-unused-vars, import/order
-// const { loginSocial } = require('./controllers/user-controller');
 const errorHandlerMiddleware = require('./middleware/error-handler');
 const notFoundMiddleware = require('./middleware/not-found');
 
