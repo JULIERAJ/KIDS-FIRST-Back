@@ -80,17 +80,10 @@ const accountActivation = asyncWrapper(async (req, res) => {
       .json({ message: 'Activation link is not correct' });
   }
   const userData = await userService.activateAccount(email);
-  // autogenerate family name and save it in db
-  const familyName = familyService.generateFamilyName();
-  const familyNameRegistration = await familyService.familyRegistration(
-    familyName,
-    userData._id,
-  );
   return res.status(StatusCodes.OK).json({
     message: 'The account is successfully activated',
     email: userData.email,
-    emailIsActivated: userData.emailIsActivated,
-    familyName: familyNameRegistration.familyName,
+    emailIsActivated: userData.emailIsActivated
   });
 });
 

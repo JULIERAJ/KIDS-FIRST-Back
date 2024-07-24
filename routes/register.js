@@ -1,6 +1,5 @@
 const express = require('express');
 
-const invitationController = require('../controllers/invitation-controller');
 const userController = require('../controllers/user-controller');
 
 const router = express.Router();
@@ -11,9 +10,7 @@ router.get(
   userController.accountActivation,
 );
 router.get(
-  '/register/:email/:family/:emailVerificationToken',
-  invitationController.invitationAccepted,
-);
+  '/register/:email/:family/:emailVerificationToken');
 router.post('/resend-email', userController.resendActivationEmail);
 
 module.exports = router;
