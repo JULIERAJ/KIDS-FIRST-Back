@@ -83,7 +83,7 @@ const accountActivation = asyncWrapper(async (req, res) => {
   return res.status(StatusCodes.OK).json({
     message: 'The account is successfully activated',
     email: userData.email,
-    emailIsActivated: userData.emailIsActivated
+    emailIsActivated: userData.emailIsActivated,
   });
 });
 
@@ -122,10 +122,10 @@ const login = asyncWrapper(async (req, res) => {
     console.log('attempt:', attemptResult.attempts);
 
     if (attemptResult.isLocked) {
-        return res.status(StatusCodes.UNAUTHORIZED).json({
-          error: `Account temporarily locked due to failed login attempts. Please wait ${LOCK_TIME / 60000} minutes or use \nForgot Password`,
-        });
-      }
+      return res.status(StatusCodes.UNAUTHORIZED).json({
+        error: `Account temporarily locked due to failed login attempts. Please wait ${LOCK_TIME / 60000} minutes or use \nForgot Password`,
+      });
+    }
 
     if (attemptResult.lastAttemptWarning) {
       console.log(`last login attempt`);
