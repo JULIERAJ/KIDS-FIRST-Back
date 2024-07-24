@@ -60,6 +60,7 @@ const registration = asyncWrapper(async (req, res) => {
     emailIsActivated: user.emailIsActivated,
   });
 });
+
 const accountActivation = asyncWrapper(async (req, res) => {
   const activationToken = req.params.emailVerificationToken;
   const { email } = req.params;
@@ -109,7 +110,7 @@ const resendActivationEmail = asyncWrapper(async (req, res) => {
 });
 
 const login = asyncWrapper(async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, rememberMe } = req.body;
   const isEmailCorrect = email && emailRegExp.test(email);
   if (!isEmailCorrect) {
     return res
@@ -150,7 +151,7 @@ const login = asyncWrapper(async (req, res) => {
   console.log(`Logged in successfully. Resetting login attempts.`);
 
   // Generate JWT and set cookie
-  attachCookies({ res, user });
+  attachCookies({ res, user, rememberMe });
 
   return res.status(StatusCodes.OK).json({
     email: user.email,
@@ -171,29 +172,13 @@ const loginFacebook = asyncWrapper(async (req, res) => {
     const password = data.email + process.env.JWT_EMAIL_VERIFICATION_SECRET;
     const emailIsActivated = true;
     await userService.registration(data.email, password, emailIsActivated);
-
-    // Generate JWT and set cookie
-    //TODO: to be updated later
-    /*attachCookies(
-      { email: data.email },
-      process.env.JWT_EMAIL_VERIFICATION_SECRET,
-      jwtEmailOptions,
-      res,
-    );*/
-
+    attachCookies({ res, user, rememberMe: true });
     res.json({
       email: data.email,
     });
   }
   if (user) {
-    // Generate JWT and set cookie
-    //TODO: to be updated later
-    /*attachCookies(
-      { email: data.email },
-      process.env.JWT_EMAIL_VERIFICATION_SECRET,
-      jwtEmailOptions,
-      res,
-    );*/
+    attachCookies({ res, user, rememberMe: true });
     res.json({
       email: data.email,
     });
@@ -257,15 +242,7 @@ const loginSocial = asyncWrapper(async (req, res) => {
       throw new Error('User creation failed');
     }
 
-    // Generate JWT and set cookie
-    //TODO: to be updated later
-    /*attachCookies(
-      { email, id: googleUserId },
-      process.env.JWT_EMAIL_VERIFICATION_SECRET,
-      jwtEmailOptions,
-      res,
-    );*/
-    attachCookies({ res, user });
+    attachCookies({ res, user, rememberMe: true });
 
     return res.status(StatusCodes.OK).json({
       email: user.email,
