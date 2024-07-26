@@ -4,7 +4,6 @@ const User = require('../models/User');
 const { verifyAccessToken } = require('../utils/tokenUtils');
 
 const authenticateUser = async (req, res, next) => {
-  // eslint-disable-next-line prefer-destructuring
   const { token } = req.signedCookies;
 
   if (!token) {
@@ -13,7 +12,6 @@ const authenticateUser = async (req, res, next) => {
   try {
     const decoded = verifyAccessToken(token);
     const user = await User.findById(decoded.userId).select('-password');
-    console.log('user', user);
     if (!user) {
       return res
         .status(StatusCodes.BAD_REQUEST)
