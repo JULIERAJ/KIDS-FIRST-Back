@@ -13,9 +13,6 @@ package-lock.json
 # production
 /build
 
-# Husky
-.husky/_
-
 # misc
 .DS_Store
 .env
