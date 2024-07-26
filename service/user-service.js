@@ -110,7 +110,6 @@ module.exports = {
   registration,
   findUser,
   isPasswordCorrect,
-  // emailTokenVerification,
   activateAccount,
   validateUserAndToken,
   updateUserPassword,
