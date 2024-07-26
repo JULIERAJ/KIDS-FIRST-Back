@@ -119,7 +119,6 @@ const login = asyncWrapper(async (req, res) => {
 
   if (!isPasswordCorrect) {
     const attemptResult = await incrementAttempts(user._id);
-    console.log('attempt:', attemptResult.attempts);
 
     if (attemptResult.isLocked) {
       return res.status(StatusCodes.UNAUTHORIZED).json({
@@ -128,8 +127,6 @@ const login = asyncWrapper(async (req, res) => {
     }
 
     if (attemptResult.lastAttemptWarning) {
-      console.log(`last login attempt`);
-
       return res.status(StatusCodes.UNAUTHORIZED).json({
         error: `Invalid password. One more attempt left before your account will be locked for ${LOCK_TIME / 60000} minutes`,
       });
@@ -141,8 +138,6 @@ const login = asyncWrapper(async (req, res) => {
 
   // reset attempts once user login successfully
   await resetAttempts(user._id);
-  console.log(`Logged in successfully. Resetting login attempts.`);
-
   // Generate JWT and set cookie
   attachCookies({ res, user, rememberMe });
 
@@ -244,8 +239,6 @@ const loginSocial = asyncWrapper(async (req, res) => {
       lastName: user.lastName,
     });
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Error fetching user data from Google API:', error.message);
     return res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .json({ error: 'Failed to login with Google' });
