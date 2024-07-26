@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const cron = require('node-cron');
 
 const User = require('../models/User');
-const { verifyEmailToken } = require('../utils/tokenUtils');
+const verificationTokenService = require('./token-verification-service');
 
 require('dotenv').config({ path: './.env.local' });
 
@@ -40,27 +40,23 @@ const isPasswordCorrect = async (email, password) => {
   return isMatch;
 };
 
-const emailTokenVerification = async (activationToken) => {
-  const tokenVerified = verifyEmailToken(activationToken);
-  return !!tokenVerified;
-};
-
 const activateAccount = async (email) => {
   const user = await User.findOneAndUpdate(
     { email: email },
     { emailIsActivated: true },
     { new: true },
   );
+  await verificationTokenService.invalidateTokens(user._id);
   return user;
 };
 
 const validateUserAndToken = async (email, token) => {
   const user = await findUser(email);
-  const resetPasswordTokenVerified = await emailTokenVerification(token);
-  if (user && resetPasswordTokenVerified) {
-    return true;
-  }
-  return false;
+  const resetPasswordTokenVerified = await verificationTokenService.verifyToken(
+    user._id,
+    token,
+  );
+  return user && resetPasswordTokenVerified;
 };
 
 const updateUserPassword = async (email, password) => {
@@ -114,7 +110,7 @@ module.exports = {
   registration,
   findUser,
   isPasswordCorrect,
-  emailTokenVerification,
+  // emailTokenVerification,
   activateAccount,
   validateUserAndToken,
   updateUserPassword,
