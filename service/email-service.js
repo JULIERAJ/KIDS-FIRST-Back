@@ -43,7 +43,9 @@ const sendEmail = async (email, subject, htmlContent) => {
       ],
     });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error sending email:', error);
+    // eslint-disable-next-line no-console
     console.error('Failed email details:', { email, subject, htmlContent });
     throw error; // rethrow the error to propagate it up the call stack
   }

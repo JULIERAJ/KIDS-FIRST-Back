@@ -267,8 +267,6 @@ const loginSocial = asyncWrapper(async (req, res) => {
       lastName: user.lastName,
     });
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Error fetching user data from Google API:', error.message);
     return res
       .status(StatusCodes.INTERNAL_SERVER_ERROR)
       .json({ error: 'Failed to login with Google' });
