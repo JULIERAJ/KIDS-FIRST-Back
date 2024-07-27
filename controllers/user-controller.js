@@ -2,16 +2,14 @@ const { StatusCodes } = require('http-status-codes');
 const fetch = require('node-fetch');
 const emailService = require('../service/email-service');
 const userService = require('../service/user-service');
+const verificationTokenService = require('../service/token-verification-service');
 const asyncWrapper = require('../middleware/async-wrapper');
 const attachCookies = require('../utils/authUtils');
 require('dotenv').config({ path: './.env.local' });
 // 1 upper/lower case letter, 1 number, 1 special symbol
 // eslint-disable-next-line max-len
 const { passwordRegExp, emailRegExp } = require('../utils/passwordUtils');
-const {
-  createJWTEmail,
-  createJWTPasswordReset,
-} = require('../utils/tokenUtils');
+const { createJWTPasswordReset } = require('../utils/tokenUtils');
 const {
   incrementAttempts,
   resetAttempts,
@@ -50,7 +48,10 @@ const registration = asyncWrapper(async (req, res) => {
 
   user = await userService.registration(firstName, lastName, email, password);
 
-  const emailVerificationToken = await createJWTEmail({ email });
+  const emailVerificationToken = await verificationTokenService.createToken(
+    user._id,
+    email,
+  );
 
   await emailService.sendActivationEmail(email, emailVerificationToken);
 
@@ -62,23 +63,43 @@ const registration = asyncWrapper(async (req, res) => {
 });
 
 const accountActivation = asyncWrapper(async (req, res) => {
-  const activationToken = req.params.emailVerificationToken;
+  const { emailVerificationToken } = req.params;
   const { email } = req.params;
+
   const user = await userService.findUser(email);
-  if (user.emailIsActivated === true) {
+  if (!user) {
+    return res
+      .status(StatusCodes.NOT_FOUND)
+      .json({ message: 'User not found' });
+  }
+
+  if (user.emailIsActivated) {
     return res.status(StatusCodes.OK).json({
       message: 'Thank you for verifying your email address!',
       email: user.email,
       emailIsActivated: user.emailIsActivated,
     });
   }
-  const activationTokenVerified =
-    await userService.emailTokenVerification(activationToken);
-  if (!activationTokenVerified) {
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ message: 'Activation link is not correct' });
+
+  const tokenStatus = await verificationTokenService.verifyToken(
+    user._id,
+    emailVerificationToken,
+  );
+
+  if (!tokenStatus.valid) {
+    if (tokenStatus.reason === 'expired') {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message:
+          'This verification link is no longer valid. Please check your inbox for the latest email.',
+      });
+    } else if (tokenStatus.reason === 'invalid') {
+      return res.status(StatusCodes.GONE).json({
+        message:
+          'Verification was unsuccessful. The link has expired. Please sign up again.',
+      });
+    }
   }
+
   const userData = await userService.activateAccount(email);
   return res.status(StatusCodes.OK).json({
     message: 'The account is successfully activated',
@@ -95,8 +116,14 @@ const resendActivationEmail = asyncWrapper(async (req, res) => {
       .status(StatusCodes.NOT_FOUND)
       .json({ message: 'User not found' });
   }
-  const emailVerificationToken = await createJWTEmail({ email });
+
+  await verificationTokenService.invalidateTokens(user._id);
+  const emailVerificationToken = await verificationTokenService.createToken(
+    user._id,
+    email,
+  );
   await emailService.sendActivationEmail(email, emailVerificationToken);
+
   return res
     .status(StatusCodes.OK)
     .json({ message: 'Activation email resent successfully' });
@@ -138,6 +165,7 @@ const login = asyncWrapper(async (req, res) => {
 
   // reset attempts once user login successfully
   await resetAttempts(user._id);
+
   // Generate JWT and set cookie
   attachCookies({ res, user, rememberMe });
 
