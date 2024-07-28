@@ -1,6 +1,6 @@
 const Kid = require('../models/Kid');
 
-const getKids = async (userId) => {
+const getAllKids = async (userId) => {
   const allKids = Kid.find({ custodyIDs: userId });
   if (!allKids) {
     throw new Error(`No kids found`);
@@ -60,7 +60,7 @@ const shareKid = async (kidId, userId, newCustodyId) => {
 };
 
 module.exports = {
-  getKids,
+  getAllKids,
   createKid,
   getKidById,
   updateKid,
