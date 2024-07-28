@@ -29,6 +29,7 @@ const updateKid = async (kidId, userId, data) => {
     data,
     {
       new: true,
+      runValidators: true,
     },
   );
   if (!updatedKid) {
@@ -45,6 +46,7 @@ const deleteKid = async (kidId, userId) => {
   if (!deletedKid) {
     throw new Error(`Kid not found or you do not have custody`);
   }
+  await User.findByIdAndUpdate(userId, { $pull: { kids: kidId } });
   return deletedKid;
 };
 
