@@ -45,15 +45,10 @@ const deleteKidCtrl = asyncWrapper(async (req, res) => {
     .json({ message: `Kid with id: ${kidId} was deleted` });
 });
 
-const shareKidCtrl = asyncWrapper(async (req, res) => {
-  res.send('this is shareKid function');
-});
-
 module.exports = {
   getAllKids: getAllKidsCtrl,
   createKid: createKidCtrl,
   getKidById: getKidByIdCtrl,
   updateKid: updateKidCtrl,
   deleteKid: deleteKidCtrl,
-  shareKid: shareKidCtrl,
 };
