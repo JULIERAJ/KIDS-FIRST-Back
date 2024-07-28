@@ -17,9 +17,7 @@ const getAllKidsCtrl = asyncWrapper(async (req, res) => {
 const createKidCtrl = asyncWrapper(async (req, res) => {
   const { id: userId } = req.user;
   const newKid = await createKid(req.body, userId);
-  res
-    .status(StatusCodes.CREATED)
-    .json({ message: `Kid with name ${newKid.name} has been created.` });
+  res.status(StatusCodes.CREATED).json({ newKid });
 });
 
 const getKidByIdCtrl = asyncWrapper(async (req, res) => {
