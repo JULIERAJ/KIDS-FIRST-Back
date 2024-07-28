@@ -1,4 +1,5 @@
 const Kid = require('../models/Kid');
+const User = require('../models/User');
 
 const getAllKids = async (userId) => {
   const allKids = Kid.find({ custodyIDs: userId });
@@ -11,6 +12,7 @@ const getAllKids = async (userId) => {
 const createKid = async (data, userId) => {
   const kid = new Kid({ ...data, custodyIDs: [userId] });
   await kid.save();
+  await User.findByIdAndUpdate(userId, { $push: { kids: kid._id } });
   return kid;
 };
 

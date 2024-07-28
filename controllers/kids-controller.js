@@ -1,29 +1,40 @@
+const { StatusCodes } = require('http-status-codes');
 const asyncWrapper = require('../middleware/async-wrapper');
+const { getAllKids, createKid } = require('../service/kid-service');
 
-const getAllKids = asyncWrapper(async (req, res) => {
-  res.send('this is getAllKids function');
+const getAllKidsCtrl = asyncWrapper(async (req, res) => {
+  const { id: userId } = req.user;
+  const kids = await getAllKids(userId);
+  res.status(StatusCodes.OK).json({ kids });
 });
 
-const createKid = asyncWrapper(async (req, res) => {
-  res.send('this is addKid function');
+const createKidCtrl = asyncWrapper(async (req, res) => {
+  const { id: userId } = req.user;
+  const newKid = await createKid(req.body, userId);
+  res.status(StatusCodes.CREATED).json({ newKid });
 });
 
-const getKidById = asyncWrapper(async (req, res) => {
+const getKidByIdCtrl = asyncWrapper(async (req, res) => {
   res.send('this is getKid function');
 });
 
-const updateKid = asyncWrapper(async (req, res) => {
+const updateKidCtrl = asyncWrapper(async (req, res) => {
   res.send('this is updateKid function');
 });
 
-const deleteKid = asyncWrapper(async (req, res) => {
+const deleteKidCtrl = asyncWrapper(async (req, res) => {
   res.send('this is deleteKid function');
 });
 
+const shareKidCtrl = asyncWrapper(async (req, res) => {
+  res.send('this is shareKid function');
+});
+
 module.exports = {
-  getAllKids,
-  createKid,
-  getKidById,
-  updateKid,
-  deleteKid,
+  getAllKids: getAllKidsCtrl,
+  createKid: createKidCtrl,
+  getKidById: getKidByIdCtrl,
+  updateKid: updateKidCtrl,
+  deleteKid: deleteKidCtrl,
+  shareKid: shareKidCtrl,
 };
