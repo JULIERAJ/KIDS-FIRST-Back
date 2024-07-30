@@ -92,6 +92,7 @@ const accountActivation = asyncWrapper(async (req, res) => {
         message:
           'This verification link is no longer valid. Please check your inbox for the latest email.',
       });
+      // eslint-disable-next-line no-else-return
     } else if (tokenStatus.reason === 'invalid') {
       return res.status(StatusCodes.GONE).json({
         message:
