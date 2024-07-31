@@ -92,12 +92,11 @@ const accountActivation = asyncWrapper(async (req, res) => {
         message:
           'This verification link is no longer valid. Please check your inbox for the latest email.',
       });
-    } else if (tokenStatus.reason === 'invalid') {
-      return res.status(StatusCodes.GONE).json({
-        message:
-          'Verification was unsuccessful. The link has expired. Please sign up again.',
-      });
     }
+    return res.status(StatusCodes.GONE).json({
+      message:
+        'Verification was unsuccessful. The link has expired. Please sign up again.',
+    });
   }
 
   const userData = await userService.activateAccount(email);
@@ -314,7 +313,11 @@ const requestResetPassword = asyncWrapper(async (req, res) => {
 
 const resetPasswordActivation = asyncWrapper(async (req, res) => {
   const { email, resetPasswordToken } = req.params;
-  if (userService.validateUserAndToken(email, resetPasswordToken)) {
+  const token = await userService.validateUserAndToken(
+    email,
+    resetPasswordToken,
+  );
+  if (token.valid) {
     return res
       .status(StatusCodes.CREATED)
       .json({ status: StatusCodes.CREATED });
@@ -334,13 +337,24 @@ const resetPasswordUpdates = asyncWrapper(async (req, res) => {
         at least one uppercase letter, one lowercase letter, one number, and one symbol`,
     });
   }
-  const decoded = await userService.emailTokenVerification(resetPasswordToken);
-  if (!decoded) {
-    return res.status(StatusCodes.UNAUTHORIZED).json({ msg: 'Invalid token' });
+  const currentUser = await userService.findUser(email);
+
+  const tokenStatus = await verificationTokenService.verifyToken(
+    currentUser._id,
+    resetPasswordToken,
+  );
+
+  if (!tokenStatus.valid) {
+    return res
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ msg: 'Token is invalid or has expired.' });
   }
+
   const user = await userService.updateUserPassword(email, password);
   await user.save();
   await resetAttempts(user._id);
+
+  await verificationTokenService.invalidateTokens(user._id);
 
   return res
     .status(StatusCodes.OK)

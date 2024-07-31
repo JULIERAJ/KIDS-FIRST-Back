@@ -56,7 +56,7 @@ const validateUserAndToken = async (email, token) => {
     user._id,
     token,
   );
-  return user && resetPasswordTokenVerified;
+  return resetPasswordTokenVerified;
 };
 
 const updateUserPassword = async (email, password) => {
