@@ -24,7 +24,7 @@ const createJWTEmail = (payload) => {
 };
 
 const createJWTPasswordReset = (payload) => {
-  const token = jwt.sign(payload, JWT_EMAIL_VERIFICATION_SECRET, {
+  const token = jwt.sign(payload, JWT_RESET_PASSWORD_SECRET, {
     expiresIn: JWT_LIFETIME,
   });
   return token;

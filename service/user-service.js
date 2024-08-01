@@ -50,11 +50,12 @@ const activateAccount = async (email) => {
   return user;
 };
 
-const validateUserAndToken = async (email, token) => {
+const validateUserAndToken = async (email, token, tokenType) => {
   const user = await findUser(email);
   const resetPasswordTokenVerified = await verificationTokenService.verifyToken(
     user._id,
     token,
+    tokenType
   );
   return resetPasswordTokenVerified;
 };
