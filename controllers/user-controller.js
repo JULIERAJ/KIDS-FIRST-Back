@@ -9,7 +9,6 @@ require('dotenv').config({ path: './.env.local' });
 // 1 upper/lower case letter, 1 number, 1 special symbol
 // eslint-disable-next-line max-len
 const { passwordRegExp, emailRegExp } = require('../utils/passwordUtils');
-const { createJWTPasswordReset } = require('../utils/tokenUtils');
 const {
   incrementAttempts,
   resetAttempts,
@@ -84,6 +83,7 @@ const accountActivation = asyncWrapper(async (req, res) => {
   const tokenStatus = await verificationTokenService.verifyToken(
     user._id,
     emailVerificationToken,
+    'email',
   );
 
   if (!tokenStatus.valid) {
@@ -300,30 +300,40 @@ const requestResetPassword = asyncWrapper(async (req, res) => {
       .status(StatusCodes.NOT_FOUND)
       .json({ error: 'No user found with this email address' });
   }
-  const passwordResetVerificationToken = await createJWTPasswordReset({
-    email,
-  });
+  const passwordResetVerificationToken =
+    await verificationTokenService.createPasswordToken(user._id, email);
   await emailService.sendResetPasswordEmail(
     email,
     passwordResetVerificationToken,
   );
-
   return res.status(StatusCodes.OK).json({
     message: `Reset password link sent to ${email}`,
   });
 });
 
 const resetPasswordActivation = asyncWrapper(async (req, res) => {
-  const { email, resetPasswordToken } = req.params;
-  if (userService.validateUserAndToken(email, resetPasswordToken)) {
-    return res
-      .status(StatusCodes.CREATED)
-      .json({ status: StatusCodes.CREATED });
+  const { resetPasswordToken, email } = req.params;
+  const user = await userService.findUser(email);
+  if (!user) {
+    return res.status(StatusCodes.UNAUTHORIZED).json({
+      status: StatusCodes.UNAUTHORIZED,
+      message: 'User does not exist',
+    });
   }
-  return res.status(StatusCodes.UNAUTHORIZED).json({
-    status: StatusCodes.UNAUTHORIZED,
-    message: 'User does not exist',
-  });
+
+  // Validate if token has been blacklisted or has expired
+  const token = await verificationTokenService.verifyToken(
+    user._id,
+    resetPasswordToken,
+    'password',
+  );
+  if (!token.valid) {
+    return res
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ msg: 'Token has expired or is no longer valid.' });
+  }
+
+  return res.status(StatusCodes.CREATED).json({ status: StatusCodes.CREATED });
 });
 
 const resetPasswordUpdates = asyncWrapper(async (req, res) => {
@@ -335,13 +345,25 @@ const resetPasswordUpdates = asyncWrapper(async (req, res) => {
         at least one uppercase letter, one lowercase letter, one number, and one symbol`,
     });
   }
-  const decoded = await userService.emailTokenVerification(resetPasswordToken);
-  if (!decoded) {
-    return res.status(StatusCodes.UNAUTHORIZED).json({ msg: 'Invalid token' });
+
+  const existingUser = await userService.findUser(email);
+  const token = await verificationTokenService.verifyToken(
+    existingUser._id,
+    resetPasswordToken,
+    'password',
+  );
+  // Validate if token has been blacklisted or has expired
+  if (!token.valid) {
+    return res
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ msg: 'Token has expired or is no longer valid.' });
   }
   const user = await userService.updateUserPassword(email, password);
   await user.save();
   await resetAttempts(user._id);
+
+  // Invalidate tokens after successful password update
+  await verificationTokenService.invalidateTokens(user._id);
 
   return res
     .status(StatusCodes.OK)
