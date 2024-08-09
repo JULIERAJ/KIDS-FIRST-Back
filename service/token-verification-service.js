@@ -1,4 +1,3 @@
-
 const VerificationToken = require('../models/VerificationToken');
 const { createJWTEmail, verifyEmailToken } = require('../utils/tokenUtils');
 
