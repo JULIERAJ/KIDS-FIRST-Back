@@ -5,13 +5,14 @@ const shareKidService = require('../service/share-kid-service');
 // Create a new share request
 const createShareRequest = asyncWrapper(async (req, res) => {
   const { kidId } = req.params;
-  const { inviteeEmail, inviteeRole } = req.body;
+  const { inviteeEmail } = req.body;
+  // const { inviteeEmail, inviteeRole } = req.body;
   const inviterID = req.user._id;
   const result = await shareKidService.createShareRequest(
     inviterID,
     kidId,
     inviteeEmail,
-    inviteeRole,
+    // inviteeRole,
   );
   res.status(StatusCodes.CREATED).json(result);
 });
