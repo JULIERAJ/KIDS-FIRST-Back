@@ -1,40 +1,41 @@
 const express = require('express');
+
 const router = express.Router();
 const shareKidController = require('../controllers/share-kid-controller');
 const authenticateUser = require('../middleware/authentication');
 
-// Create a new share invitation for a specific kid
+// Create a new share request for a specific kid
 router.post(
-  '/:kidId/share-kid',
+  '/:kidId/share-request',
   authenticateUser,
-  shareKidController.createShareKid,
+  shareKidController.createShareRequest,
 );
 
-// Get all share invitations for the authenticated user related to a specific kid
-router.get('/:kidId/share-kid',
-  authenticateUser,
-  shareKidController.getAllShareKids
-);
-
-// Get a specific share invitation by ID for a specific kid
+// Get all pending requests for the authenticated user
 router.get(
-  '/:kidId/share-kid/:shareKidId',
+  '/requests',
   authenticateUser,
-  shareKidController.getShareKidById,
+  shareKidController.getAllPendingRequests,
+);
+// Create a new delete request for a specific kid
+router.post(
+  '/:kidId/delete-request',
+  authenticateUser,
+  shareKidController.createDeleteRequest,
 );
 
-// Update the status of a share invitation for a specific kid
+// Update the status of a share request for a specific kid
 router.put(
-  '/:kidId/share-kid/:shareKidId',
+  '/share-request/:requestId',
   authenticateUser,
-  shareKidController.updateShareKid,
+  shareKidController.handleShareResponse,
 );
 
-// Delete a share invitation for a specific kid
-router.delete(
-  '/:kidId/share-kid/:shareKidId',
+// Update the status of a delete request for a specific kid
+router.put(
+  '/delete-request/:requestId',
   authenticateUser,
-  shareKidController.deleteShareKid,
+  shareKidController.handleDeleteResponse,
 );
 
 module.exports = router;

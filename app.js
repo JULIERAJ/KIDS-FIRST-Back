@@ -47,6 +47,7 @@ app.use(cookieParser(process.env.JWT_SECRET)); //the secret key should match the
 
 // Routes
 app.use('/api/v1', userRoutes);
+app.use('/api/v1', shareKid);
 app.use('/api/v1/kids', kidsRoutes);
 app.use('/api/v1/kids', shareKid);
 

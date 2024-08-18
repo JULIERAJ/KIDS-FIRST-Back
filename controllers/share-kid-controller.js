@@ -1,35 +1,66 @@
 const { StatusCodes } = require('http-status-codes');
 const asyncWrapper = require('../middleware/async-wrapper');
+const shareKidService = require('../service/share-kid-service');
 
-// Create a new share invitation
-const createShareKid = asyncWrapper(async (req, res) => {
-  res.status(StatusCodes.CREATED).json('Create shareKid invitation');
+// Create a new share request
+const createShareRequest = asyncWrapper(async (req, res) => {
+  const { kidId } = req.params;
+  const { inviteeEmail } = req.body;
+  // const { inviteeEmail, inviteeRole } = req.body;
+  const inviterID = req.user._id;
+  const result = await shareKidService.createShareRequest(
+    inviterID,
+    kidId,
+    inviteeEmail,
+    // inviteeRole,
+  );
+  res.status(StatusCodes.CREATED).json(result);
 });
 
-// Get all share invitations for the authenticated user related to a specific kid
-const getAllShareKids = asyncWrapper(async (req, res) => {
-  res.status(StatusCodes.OK).json('Get all shareKids invitations');
+// Get all pending requests for the authenticated user
+const getAllPendingRequests = asyncWrapper(async (req, res) => {
+  const userEmail = req.user.email; // Assuming you have user information in req.user from authentication
+  const requests = await shareKidService.getUserRequests(userEmail);
+  res.status(StatusCodes.OK).json(requests);
+});
+// Create a new delete request
+const createDeleteRequest = asyncWrapper(async (req, res) => {
+  const { kidId } = req.params;
+  const inviterID = req.user._id;
+  const result = await shareKidService.createDeleteRequest(inviterID, kidId);
+  res.status(StatusCodes.OK).json(result);
 });
 
-// Get a specific share invitation by ID
-const getShareKidById = asyncWrapper(async (req, res) => {
-  res.status(StatusCodes.OK).json('Get shareKid by invitation ID');
+// Handle a share request response
+const handleShareResponse = asyncWrapper(async (req, res) => {
+  const { requestId } = req.params;
+  const { response } = req.body;
+  const userEmail = req.user.email;
+  const result = await shareKidService.handleShareResponse(
+    requestId,
+    response,
+    userEmail,
+  );
+  res.status(StatusCodes.OK).json(result);
 });
 
-// Update the status of a share invitation
-const updateShareKid = asyncWrapper(async (req, res) => {
-  res.status(StatusCodes.OK).json('Update shareKid by invitation ID');
-});
-
-// Delete a share invitation
-const deleteShareKid = asyncWrapper(async (req, res) => {
-  res.status(StatusCodes.OK).json('Delete shareKid by invitation ID');
+// Handle a delete request response
+const handleDeleteResponse = asyncWrapper(async (req, res) => {
+  const { requestId } = req.params;
+  const { response } = req.body;
+  const userEmail = req.user.email;
+  const result = await shareKidService.handleDeleteResponse(
+    requestId,
+    response,
+    userEmail,
+  );
+  res.status(StatusCodes.OK).json(result);
 });
 
 module.exports = {
-  createShareKid,
-  getAllShareKids,
-  getShareKidById,
-  updateShareKid,
-  deleteShareKid,
+  createShareRequest,
+  createDeleteRequest,
+  handleShareResponse,
+  handleDeleteResponse,
+  getAllPendingRequests,
 };
