@@ -105,7 +105,7 @@ const KidsSchema = new Schema(
             'Blood',
             'Clowns',
             'Crowded places',
-            'The dark',
+            'The darkness',
             'Enclosed spaces',
             'Heights',
             'Flying',
