@@ -8,7 +8,7 @@ const createShareRequest = async (
   inviterID,
   kidID,
   inviteeEmail,
-  inviteeRole,
+  // inviteeRole,
 ) => {
   const kid = await Kid.findById(kidID);
   if (!kid) throw new Error('Kid does not exist');
@@ -16,7 +16,7 @@ const createShareRequest = async (
   const inviter = await User.findById(inviterID);
   if (!inviter || !inviter.kids.includes(kidID))
     throw new Error('Inviter does not have custody of the kid');
-  if (inviter.role !== 'parent') throw new Error('Inviter is not a parent');
+  // if (inviter.role !== 'parent') throw new Error('Inviter is not a parent');
   if (inviter.email === inviteeEmail) {
     throw new Error(
       'You cannot create a share request to your own email address.',
@@ -54,7 +54,7 @@ const createShareRequest = async (
     // Update invitee role in user account
     await User.findByIdAndUpdate(
       invitee._id,
-      { role: inviteeRole },
+      // { role: inviteeRole },
       { new: true },
     );
 
@@ -71,7 +71,7 @@ const createShareRequest = async (
 const handleShareResponse = async (requestId, response, userEmail) => {
   const shareRequest = await ShareKid.findById(requestId);
   if (!shareRequest) throw new Error('Share request not found');
-  if (!userEmail === shareRequest.inviteeEmail) {
+  if (userEmail !== shareRequest.inviteeEmail) {
     throw new Error('You do not have the right to respond to this request');
   }
 
@@ -137,11 +137,11 @@ const createDeleteRequest = async (inviterID, kidID) => {
   const inviter = await User.findById(inviterID);
   if (!inviter || !inviter.kids.includes(kidID))
     throw new Error('Inviter does not have custody of the kid');
-  if (inviter.role !== 'parent') throw new Error('Inviter is not a parent');
+  // if (inviter.role !== 'parent') throw new Error('Inviter is not a parent');
 
   const coParent = await User.findOne({
     kids: { $in: [kidID] },
-    role: 'parent',
+    // role: 'parent',
     _id: { $ne: inviterID },
   });
 

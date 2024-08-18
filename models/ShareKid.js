@@ -31,10 +31,6 @@ const ShareKidSchema = new Schema(
     },
     inviteeLastName: {
       type: String,
-      required: [
-        true,
-        'Please enter the last name of the person you want to share the kid with',
-      ],
       trim: true,
     },
     status: {
