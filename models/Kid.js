@@ -66,23 +66,26 @@ const KidsSchema = new Schema(
         },
       ],
     },
-    interest: {
+    interests: {
       type: [
         {
           type: String,
           enum: [
             'Animals',
-            'Arts and crafts',
+            'Arts and Crafts',
             'Basketball',
+            'Board Games',
             'Cooking',
             'Dancing',
             'Drawing',
-            'Ice hockey',
+            'Ice Hockey',
             'Music',
+            'Pets',
             'Reading',
             'Singing',
             'Soccer',
-            'Video games',
+            'Swimming',
+            'Video Games',
           ],
         },
       ],
