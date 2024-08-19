@@ -72,20 +72,20 @@ const KidsSchema = new Schema(
           type: String,
           enum: [
             'Animals',
-            'Arts and Crafts',
+            'Arts and crafts',
             'Basketball',
-            'Board Games',
+            'Board games',
             'Cooking',
             'Dancing',
             'Drawing',
-            'Ice Hockey',
+            'Ice hockey',
             'Music',
             'Pets',
             'Reading',
             'Singing',
             'Soccer',
             'Swimming',
-            'Video Games',
+            'Video games',
           ],
         },
       ],
@@ -117,6 +117,7 @@ const KidsSchema = new Schema(
     otherNotes: {
       type: String,
       maxlength: [200, 'Notes can be a maximum of 200 characters'],
+      trim: true,
     },
     custodyIDs: [
       {
