@@ -1,117 +1,89 @@
-const { StatusCodes } = require('http-status-codes');
-const jwt = require('jsonwebtoken');
+// const { StatusCodes } = require('http-status-codes');
+// const emailService = require('../service/email-service');
+// const userService = require('../service/user-service');
+// const invitationService = require('../service/invitation-service');
+// const asyncWrapper = require('../middleware/async-wrapper');
+// const { createJWTEmail } = require('../utils/tokenUtils');
 
-const emailService = require('../service/email-service');
-const invitationService = require('../service/invitation-service');
-const principleService = require('../service/principle-service');
+// const invitation = asyncWrapper(async (req, res) => {
+//   const { inviter, family, inviteeEmail, firstName, inviteeInviteLater } =
+//     req.body;
 
-const invitation = async (
-  inviter,
-  family,
-  inviteeEmail,
-  firstName,
-  inviteeInviteLater,
-) => {
-  if (!inviteeInviteLater) {
-    try {
-      const duplicate = await invitationService.findInviteeDuplicate(
-        inviteeEmail,
-        family,
-      );
+//   if (!inviteeInviteLater) {
+//     const duplicate = await invitationService.findInviteeDuplicate(
+//       inviteeEmail,
+//       family,
+//     );
 
-      if (duplicate) {
-        const emailVerificationToken = await jwt.sign(
-          { inviteeEmail },
-          process.env.JWT_EMAIL_VERIFICATION_SECRET,
-          { expiresIn: process.env.JWT_EMAIL_LIFETIME },
-        );
+//     const emailVerificationToken = createJWTEmail({ inviteeEmail });
 
-        await emailService.sendInvitationEmail(
-          inviteeEmail,
-          family,
-          emailVerificationToken,
-          firstName,
-        );
-        /* return res
-          .status(200)
-          .json({
-            message: `Invitation email to ${inviteeEmail} is sent`,
-          });
-          */
-      }
+//     await emailService.sendInvitationEmail(
+//       inviteeEmail,
+//       family,
+//       emailVerificationToken,
+//       firstName,
+//     );
 
-      if (!duplicate) {
-        const emailVerificationToken = await jwt.sign(
-          { inviteeEmail },
-          process.env.JWT_EMAIL_VERIFICATION_SECRET,
-          { expiresIn: process.env.JWT_EMAIL_LIFETIME },
-        );
+//     if (!duplicate) {
+//       const invitationURL = await emailService.sendInvitationEmail(
+//         inviteeEmail,
+//         family,
+//         emailVerificationToken,
+//         firstName,
+//       );
 
-        const invitationURL = await emailService.sendInvitationEmail(
-          inviteeEmail,
-          family,
-          emailVerificationToken,
-          firstName,
-        );
-        /*
-        return {
-          statusCode: StatusCodes.CREATED,
-          message: 'Invitation email is sent',
-          inviteeEmail: inviteeEmail,
-        };
-        */
+//       await invitationService.createInvitation(
+//         inviter,
+//         family,
+//         inviteeEmail,
+//         invitationURL,
+//       );
 
-        /* eslint-disable no-unused-vars */
-        const invitee = await invitationService.createInvitation(
-          inviter,
-          family,
-          inviteeEmail,
-          invitationURL,
-        );
-      }
-    } catch (e) {
-      return {
-        statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
-        message: 'Something went wrong',
-      };
-    }
-  }
-};
+//       return res.status(StatusCodes.CREATED).json({
+//         message: 'Invitation email is sent',
+//         inviteeEmail,
+//       });
+//     }
+//     return res.status(StatusCodes.OK).json({
+//       message: `Invitation email to ${inviteeEmail} is sent`,
+//     });
+//   }
+//   return res.status(StatusCodes.OK).json({
+//     message: 'Invitee has chosen to be invited later',
+//   });
+// });
 
-const invitationAccepted = async (req, res) => {
-  const emailToken = req.params.emailVerificationToken;
-  const { email } = req.params;
+// const invitationAccepted = asyncWrapper(async (req, res) => {
+//   const emailToken = req.params.emailVerificationToken;
+//   const { email } = req.params;
 
-  try {
-    const invitation = await invitationService.findInviteeEmail(email);
+//   // eslint-disable-next-line no-shadow
+//   const invitation = await invitationService.findInviteeEmail(email);
 
-    if (invitation.invitationAccepted === true) {
-      return res.status(StatusCodes.OK).json({
-        message: 'Invitation has been accepted, proceed to registration',
-        email: invitation.inviteeEmail,
-        invitationAccepted: invitation.invitationAccepted,
-      });
-    }
+//   if (invitation.invitationAccepted === true) {
+//     return res.status(StatusCodes.OK).json({
+//       message: 'Invitation has been accepted, proceed to registration',
+//       email: invitation.inviteeEmail,
+//       invitationAccepted: invitation.invitationAccepted,
+//     });
+//   }
 
-    const activationTokenVerified =
-      await principleService.emailTokenVerification(emailToken);
+//   const activationTokenVerified =
+//     await userService.emailTokenVerification(emailToken);
 
-    if (!activationTokenVerified) {
-      return res
-        .status(StatusCodes.BAD_REQUEST)
-        .json({ message: 'invitation link is not correct' });
-    }
-    const invitationData = await invitationService.acceptedInvitation(email);
-    return res.status(StatusCodes.OK).json({
-      message: 'the invitation is successfully accepted',
-      email: invitationData.inviteeEmail,
-      invitationAccepted: invitationData.invitationAccepted,
-    });
-  } catch (e) {
-    return res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ message: e.message });
-  }
-};
+//   if (!activationTokenVerified) {
+//     return res
+//       .status(StatusCodes.BAD_REQUEST)
+//       .json({ message: 'Invitation link is not correct' });
+//   }
 
-module.exports = { invitation, invitationAccepted };
+//   const invitationData = await invitationService.acceptedInvitation(email);
+
+//   return res.status(StatusCodes.OK).json({
+//     message: 'The invitation is successfully accepted',
+//     email: invitationData.inviteeEmail,
+//     invitationAccepted: invitationData.invitationAccepted,
+//   });
+// });
+
+// module.exports = { invitation, invitationAccepted };

@@ -1,8 +1,6 @@
 const ejs = require('ejs');
 const nodemailer = require('nodemailer');
-
 const path = require('path');
-
 require('dotenv').config({ path: './.env.local' });
 
 // create reusable transporter object using the default SMTP transport
@@ -16,21 +14,18 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-//function to render the email template using EJS
+// function to render the email template using EJS
 const renderTemplate = (templateName, data) => {
-  const templatePath = path.join(
-    __dirname,
-    '../templates',
-    `${templateName}.ejs`,
-  );
+  const templatePath = path.join(__dirname, '../templates', `${templateName}.ejs`);
   return ejs.renderFile(templatePath, data);
 };
 
-//function that sends email using nodemailer
+// function that sends email using nodemailer
 const sendEmail = async (email, subject, htmlContent) => {
   try {
     await transporter.sendMail({
-      from: process.env.SMTP_USER,
+      //from: process.env.SMTP_USER,
+      from: `KIDS FIRST <*********@gmail.com>`,
       to: email,
       subject: subject,
       html: htmlContent,
@@ -43,7 +38,9 @@ const sendEmail = async (email, subject, htmlContent) => {
       ],
     });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error sending email:', error);
+    // eslint-disable-next-line no-console
     console.error('Failed email details:', { email, subject, htmlContent });
     throw error; // rethrow the error to propagate it up the call stack
   }
@@ -69,22 +66,62 @@ const sendGeneralEmail = async (
   await sendEmail(email, subject, htmlContent);
 };
 
-//function that sends verification email with the link
+// function that sends an activational email
+const sendActivationalEmail = async (
+  email,
+  subject,
+  greetingText,
+  messageText,
+  endText,
+  buttonText,
+  href,
+) => {
+  const htmlContent = await renderTemplate('activate-email', {
+    greetingText,
+    messageText,
+    endText,
+    buttonText,
+    href,
+  });
+  await sendEmail(email, subject, htmlContent);
+};
+
+// function to send reset password email
+const resetPasswordEmail = async (
+  email,
+  subject,
+  greetingText,
+  messageText,
+  endText,
+  buttonText,
+  href,
+) => {
+  const htmlContent = await renderTemplate('reset-password-email', {
+    greetingText,
+    messageText,
+    endText,
+    buttonText,
+    href,
+  });
+  await sendEmail(email, subject, htmlContent);
+};
+
+// function that sends verification email with the link
 const sendActivationEmail = async (email, emailVerificationToken) => {
   const href = `${process.env.CLIENT_URL}/activate/${email}/${emailVerificationToken}`;
   const subject = 'KIDS FIRST Account Verification';
   const greetingText = 'Hello and welcome to KIDS FIRST!';
   const messageText =
-    'To continue the registration process, please click Verify My Account.';
-  const endText = "If you don't use this link within 1 hour, it will expire.";
-  const buttonText = 'Verify My Account';
-  await sendGeneralEmail(
+    'To continue the registration process, please click "Verify my email".';
+  const endText = 'This link will expire after 60 minutes.';
+  const buttonText = 'Verify my email';
+  await sendActivationalEmail(
     email,
     subject,
     greetingText,
     messageText,
-    buttonText,
     endText,
+    buttonText,
     href,
   );
 };
@@ -92,20 +129,21 @@ const sendActivationEmail = async (email, emailVerificationToken) => {
 // function that sends reset password email with the link
 const sendResetPasswordEmail = async (email, resetPasswordToken) => {
   const href = `${process.env.CLIENT_URL}/reset-password/${email}/${resetPasswordToken}`;
-  const subject = '[Kids First] Please reset your password';
+  const subject = 'Reset Your Password';
   const greetingText = 'Reset your KIDS FIRST password';
   const messageText =
-    'We heard that you lost your KIDS FIRST password, sorry about that! ' +
-    'But don’t worry you can use the following button to reset your password:';
-  const endText = 'If you don’t use this link within 3 hours, it will expire.';
-  const buttonText = 'Reset Your Password';
-  await sendGeneralEmail(
+    'Heard you’re having trouble with your KIDS FIRST password—no need to worry! ' +
+    'Click the button below to easily reset your password and get back on track.';
+  const endText = 'Please note, this link will expire in 60 minutes. ' +
+    'Thank you for being a part of KIDS FIRST!';
+  const buttonText = 'Reset my password';
+  await resetPasswordEmail(
     email,
     subject,
     greetingText,
     messageText,
-    buttonText,
     endText,
+    buttonText,
     href,
   );
 };
