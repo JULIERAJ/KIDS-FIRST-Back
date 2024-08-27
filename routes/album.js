@@ -4,6 +4,6 @@ const router = express.Router();
 const { fileUploader } = require('../controllers/album-controller');
 const { multerUploader } = require('../middleware/multer');
 
-router.post('/uploadFiles', multerUploader, fileUploader);
+router.post('/uploadFiles/:userId', multerUploader, fileUploader);
 
 module.exports = router;

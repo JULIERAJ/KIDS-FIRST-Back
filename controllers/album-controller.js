@@ -6,9 +6,10 @@ const { dataUri } = require('../middleware/multer');
 
 // Route to upload files through multer and cloudinary
 const fileUploader = asyncWrapper(async (req, res) => {
+  const { userId } = req.params;
   const uploadPromises = req.files.map(async (file) => {
     const fileUri = dataUri(file).content;
-    const uploadResult = await uploadFilesCloudinary(fileUri);
+    const uploadResult = await uploadFilesCloudinary(fileUri, userId);
     return uploadResult;
   });
 

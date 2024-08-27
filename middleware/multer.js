@@ -1,21 +1,31 @@
+// eslint-disable-next-line node/no-extraneous-require
 const multer = require('multer');
-// eslint-disable-next-line import/no-extraneous-dependencies
+// eslint-disable-next-line import/no-extraneous-dependencies, node/no-extraneous-require
 const DatauriParser = require('datauri/parser');
+const { StatusCodes } = require('http-status-codes');
 
 // Image is stored in memory prior to being streamed to cloudinary as there may be restrictions in temporarily storing in the server's harddisk.
 const storage = multer.memoryStorage();
-const uploadFilter = (req, file, cb) => {
+const uploadFilter = (req, file, callback) => {
   const typeArray = file.mimetype.split('/');
   const fileType = typeArray[1];
-  if (
-    fileType === 'jpg' ||
-    fileType === 'png' ||
-    fileType === 'jpeg' ||
-    fileType === 'pdf'
-  ) {
-    cb(null, true);
-  } else {
-    cb('File type is not accepted', false);
+  try {
+    if (
+      fileType === 'jpg' ||
+      fileType === 'png' ||
+      fileType === 'jpeg' ||
+      fileType === 'pdf'
+    ) {
+      callback(null, true);
+    } else {
+      // eslint-disable-next-line no-undef
+      callback(
+        'File type does not match: .jpg || .png || .jpeg || .pdf',
+        false,
+      );
+    }
+  } catch (err) {
+    callback(new Error(err));
   }
 };
 const fileNameFormater = (req, file, callback) => {
@@ -30,7 +40,19 @@ const upload = multer({
 });
 
 // Multer uploader
-const multerUploader = upload.array('image', 5);
+const multerUploader = (req, res, next) => {
+  const uploadFiletoMulter = upload.array('file', 5);
+
+  uploadFiletoMulter(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      res.status(StatusCodes.BAD_REQUEST).json(err);
+    } else if (err) {
+      res.status(StatusCodes.BAD_GATEWAY).json(err);
+    } else {
+      next();
+    }
+  });
+};
 
 /**
  * @description This function converts the buffer to data url
