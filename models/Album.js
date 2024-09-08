@@ -32,7 +32,7 @@ const AlbumSchema = new Schema(
     kidID: {
       type: Schema.Types.ObjectId,
       ref: 'Kid',
-      required: true,
+      required: false,
     },
     createdBy: {
       type: Schema.Types.ObjectId,
@@ -42,7 +42,7 @@ const AlbumSchema = new Schema(
     messageId: {
       type: Schema.Types.ObjectId,
       ref: 'Message',
-      required: true,
+      required: false,
     },
   },
   {

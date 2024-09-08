@@ -1,21 +1,52 @@
 const { StatusCodes } = require('http-status-codes');
 const asyncWrapper = require('../middleware/async-wrapper');
-const { uploadFilesCloudinary } = require('../service/album-service');
+const {
+  uploadFilesCloudinary,
+  createNewAlbum,
+  getAlbum,
+  updateAlbum,
+} = require('../service/album-service');
 
 const { dataUri } = require('../middleware/multer');
 
 // Route to upload files through multer and cloudinary
 const fileUploader = asyncWrapper(async (req, res) => {
-  const { userId } = req.params;
-  const uploadPromises = req.files.map(async (file) => {
-    const fileUri = dataUri(file).content;
-    const uploadResult = await uploadFilesCloudinary(fileUri, userId);
-    return uploadResult;
-  });
+  try {
+    const { userId } = req.params;
+    const existingAlbum = await getAlbum(userId);
+    const cloudinaryUploadPromises = req.files.map(async (file) => {
+      const fileUri = dataUri(file).content;
+      const cloudinaryUploadResult = await uploadFilesCloudinary(
+        fileUri,
+        userId,
+      );
+      let dbUploadResult;
 
-  const uploadResults = await Promise.all(uploadPromises);
+      if (cloudinaryUploadResult.status === 200 && existingAlbum.length === 0) {
+        dbUploadResult = await createNewAlbum({
+          title: userId, // Requirements for title need to be clarified
+          photos: [{ url: cloudinaryUploadResult.url }],
+          createdBy: userId,
+        });
+      } else if (cloudinaryUploadResult.status === 200) {
+        dbUploadResult = await updateAlbum(userId, {
+          url: cloudinaryUploadResult.url,
+        });
+      } else {
+        dbUploadResult = cloudinaryUploadResult;
+      }
 
-  res.status(StatusCodes.MULTI_STATUS).json(uploadResults);
+      return dbUploadResult;
+    });
+
+    const cloudinaryUploadResults = await Promise.all(cloudinaryUploadPromises);
+
+    res.status(StatusCodes.MULTI_STATUS).json(cloudinaryUploadResults);
+  } catch (err) {
+    res.status(StatusCodes.BAD_GATEWAY).json({
+      err,
+    });
+  }
 });
 
 module.exports = { fileUploader };
