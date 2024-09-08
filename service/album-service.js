@@ -1,5 +1,9 @@
+/* eslint-disable camelcase */
 const { StatusCodes } = require('http-status-codes');
-const { uploader } = require('../config/cloudinary-config');
+const {
+  uploader,
+  resources_by_asset_folder,
+} = require('../config/cloudinary-config');
 const Album = require('../models/Album');
 
 // Upload files to Cloudinary
@@ -80,9 +84,31 @@ const updateAlbum = async (createdBy, photo) => {
   }
 };
 
+// Get all photos from Cloudinary
+// TODO: Set up pagination for images: https://cloudinary.com/blog/lazy-loading-with-infinite-scroll
+const getAllPhotoCloudinary = async (userId) => {
+  try {
+    const photos = await resources_by_asset_folder(
+      `albums/${userId}`,
+      { tags: true, metadata: true },
+      (error, result) => error,
+    );
+    if (photos) {
+      return {
+        status: StatusCodes.OK,
+        message: 'Successfully fetched images from Cloudinary.',
+        photos,
+      };
+    }
+  } catch (err) {
+    return new Error(err);
+  }
+};
+
 module.exports = {
   uploadFilesCloudinary,
   createNewAlbum,
   getAlbum,
   updateAlbum,
+  getAllPhotoCloudinary,
 };

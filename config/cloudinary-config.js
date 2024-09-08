@@ -1,5 +1,8 @@
+/* eslint-disable camelcase */
 // eslint-disable-next-line import/no-extraneous-dependencies
 const { config, uploader } = require('cloudinary').v2;
+// eslint-disable-next-line import/no-extraneous-dependencies
+const { resources_by_asset_folder } = require('cloudinary').v2.api;
 
 const dotenv = require('dotenv');
 
@@ -14,4 +17,4 @@ const cloudinaryConfig = (req, res, next) => {
   next();
 };
 
-module.exports = { cloudinaryConfig, uploader };
+module.exports = { cloudinaryConfig, uploader, resources_by_asset_folder };

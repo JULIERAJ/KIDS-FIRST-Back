@@ -5,11 +5,12 @@ const {
   createNewAlbum,
   getAlbum,
   updateAlbum,
+  getAllPhotoCloudinary,
 } = require('../service/album-service');
 
 const { dataUri } = require('../middleware/multer');
 
-// Route to upload files through multer and cloudinary
+// Controller to upload files through multer and cloudinary
 const fileUploader = asyncWrapper(async (req, res) => {
   try {
     const { userId } = req.params;
@@ -49,4 +50,17 @@ const fileUploader = asyncWrapper(async (req, res) => {
   }
 });
 
-module.exports = { fileUploader };
+// Controller to get files from cloudinary
+const getAllPhotos = asyncWrapper(async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const results = await getAllPhotoCloudinary(userId);
+    res.status(StatusCodes.ACCEPTED).json(results);
+  } catch (err) {
+    res.status(StatusCodes.BAD_GATEWAY).json({
+      err,
+    });
+  }
+});
+
+module.exports = { fileUploader, getAllPhotos };

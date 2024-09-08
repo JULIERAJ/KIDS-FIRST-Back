@@ -54,7 +54,7 @@ app.use('/api/v1', userRoutes);
 app.use('/api/v1', shareKid);
 app.use('/api/v1/kids', kidsRoutes);
 app.use('/api/v1/kids', shareKid);
-app.use('/api/v1', albumRoutes);
+app.use('/api/v1/album', albumRoutes);
 app.use('/api/v1/messages', messagesRoutes);
 
 // Error handling middleware
