@@ -8,12 +8,10 @@ const morgan = require('morgan');
 const helmet = require('helmet');
 // eslint-disable-next-line import/no-extraneous-dependencies
 // const mongoSanitize = require('express-mongo-sanitize');
-const { cloudinaryConfig } = require('./config/cloudinary-config');
 
 const kidsRoutes = require('./routes/kids');
 const userRoutes = require('./routes/user');
 const shareKid = require('./routes/share-kid');
-const albumRoutes = require('./routes/album');
 const messagesRoutes = require('./routes/messages');
 
 const errorHandlerMiddleware = require('./middleware/error-handler');
@@ -47,14 +45,12 @@ app.use(express.urlencoded({ extended: false }));
 app.use(morgan('dev'));
 app.use(morgan(':body'));
 app.use(cookieParser(process.env.JWT_SECRET)); //the secret key should match the one we sign the cookie with
-app.use('*', cloudinaryConfig);
 
 // Routes
 app.use('/api/v1', userRoutes);
 app.use('/api/v1', shareKid);
 app.use('/api/v1/kids', kidsRoutes);
 app.use('/api/v1/kids', shareKid);
-app.use('/api/v1', albumRoutes);
 app.use('/api/v1/messages', messagesRoutes);
 
 // Error handling middleware
