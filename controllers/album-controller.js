@@ -24,8 +24,8 @@ const fileUploader = asyncWrapper(async (req, res) => {
       let dbUploadResult;
 
       if (cloudinaryUploadResult.status === 200 && existingAlbum.length === 0) {
+        //TODO: Add MessageID and KidID. This is pending Message Service creation
         dbUploadResult = await createNewAlbum({
-          title: userId, // Requirements for title need to be clarified
           photos: [{ url: cloudinaryUploadResult.url }],
           createdBy: userId,
         });
