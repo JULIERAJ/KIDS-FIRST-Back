@@ -8,7 +8,6 @@ const morgan = require('morgan');
 const helmet = require('helmet');
 // eslint-disable-next-line import/no-extraneous-dependencies
 // const mongoSanitize = require('express-mongo-sanitize');
-const { cloudinaryConfig } = require('./config/cloudinary-config');
 
 const kidsRoutes = require('./routes/kids');
 const userRoutes = require('./routes/user');
@@ -47,7 +46,6 @@ app.use(express.urlencoded({ extended: false }));
 app.use(morgan('dev'));
 app.use(morgan(':body'));
 app.use(cookieParser(process.env.JWT_SECRET)); //the secret key should match the one we sign the cookie with
-app.use('*', cloudinaryConfig);
 
 // Routes
 app.use('/api/v1', userRoutes);

@@ -1,4 +1,5 @@
 const express = require('express');
+const { cloudinaryConfig } = require('../config/cloudinary-config');
 
 const router = express.Router();
 const {
