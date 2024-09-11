@@ -8,7 +8,7 @@ const {
 } = require('../controllers/album-controller');
 const { multerUploader } = require('../middleware/multer');
 
-router.post('/:userId', multerUploader, fileUploader);
-router.get('/:userId', getAllPhotos);
+router.post('/:userId', multerUploader, cloudinaryConfig, fileUploader);
+router.get('/:userId', cloudinaryConfig, getAllPhotos);
 
 module.exports = router;
