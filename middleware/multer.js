@@ -1,12 +1,13 @@
-// eslint-disable-next-line node/no-extraneous-require
+/* eslint-disable import/no-extraneous-dependencies */
 const multer = require('multer');
-// eslint-disable-next-line import/no-extraneous-dependencies, node/no-extraneous-require
 const DatauriParser = require('datauri/parser');
 const { StatusCodes } = require('http-status-codes');
 
-// Image is stored in memory prior to being streamed to cloudinary as there may be restrictions in temporarily storing in the server's harddisk.
-const storage = multer.memoryStorage();
-const uploadFilter = (req, file, callback) => {
+// File size limit
+const fileSize = 500000;
+
+// Filter files that are not of correct type
+const fileUploadFilter = (req, file, callback) => {
   const typeArray = file.mimetype.split('/');
   const fileType = typeArray[1];
   try {
@@ -18,11 +19,7 @@ const uploadFilter = (req, file, callback) => {
     ) {
       callback(null, true);
     } else {
-      // eslint-disable-next-line no-undef
-      callback(
-        'File type does not match: .jpg || .png || .jpeg || .pdf',
-        false,
-      );
+      callback(new multer.MulterError('UNACCEPTED_FILE_TYPE'), false);
     }
   } catch (err) {
     callback(new Error(err));
@@ -34,20 +31,32 @@ const fileNameFormater = (req, file, callback) => {
 
 // Multer configurations
 const upload = multer({
-  storage: storage,
-  fileFilter: uploadFilter,
+  storage: multer.memoryStorage(),
+  fileFilter: fileUploadFilter,
   filename: fileNameFormater,
+  limits: { fileSize: fileSize },
 });
 
-// Multer uploader
+/**
+ * @description Multer is used to store image in memory prior to being streamed to cloudinary as there may be restrictions in temporarily storing in the server's harddisk.
+ * @param {Object} req containing files to be passed through multer
+ * @returns {Object} res containing file metadata and buffer
+ */
 const multerUploader = (req, res, next) => {
   const uploadFiletoMulter = upload.array('file', 5);
 
   uploadFiletoMulter(req, res, (err) => {
     if (err instanceof multer.MulterError) {
-      res.status(StatusCodes.BAD_REQUEST).json(err);
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        err.message = `File or files are too large. File size must be limited to ${fileSize} bytes.`;
+      } else if (err.code === 'UNACCEPTED_FILE_TYPE') {
+        err.message = `File with unaccepted file type sent. Accepted file types are : .jpg || .png || .jpeg || .pdf`;
+        err.name = 'fileFilterError';
+        err.field = 'file';
+      }
+      res.status(StatusCodes.BAD_REQUEST).json({ error: err });
     } else if (err) {
-      res.status(StatusCodes.BAD_GATEWAY).json(err);
+      res.status(StatusCodes.BAD_GATEWAY).json({ error: err });
     } else {
       next();
     }

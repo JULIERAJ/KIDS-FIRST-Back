@@ -5,11 +5,6 @@ const { validateImageURL, validateImageSize } = require('../utils/validators');
 
 const AlbumSchema = new Schema(
   {
-    title: {
-      type: String,
-      required: [true, 'The album must have a title'],
-      trim: true,
-    },
     photos: [
       {
         url: {
