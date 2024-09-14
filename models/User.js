@@ -42,6 +42,12 @@ const UserSchema = new Schema(
       type: String,
       default: 'user',
     },
+    contacts: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
     kids: [
       {
         type: Schema.Types.ObjectId,
