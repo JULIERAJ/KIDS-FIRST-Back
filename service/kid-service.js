@@ -1,5 +1,7 @@
+const moment = require('moment');
 const Kid = require('../models/Kid');
 const User = require('../models/User');
+const { dateConverter } = require('../utils/helper');
 
 const getAllKids = async (userId) => {
   const allKids = Kid.find({ custodyIDs: userId });
@@ -10,7 +12,8 @@ const getAllKids = async (userId) => {
 };
 
 const createKid = async (data, userId) => {
-  const kid = new Kid({ ...data, custodyIDs: [userId] });
+  const age = moment().diff(dateConverter(data.dateOfBirthday), 'years', false);
+  const kid = new Kid({ ...data, age: age, custodyIDs: [userId] });
   await kid.save();
   await User.findByIdAndUpdate(userId, { $push: { kids: kid._id } });
   return kid;
