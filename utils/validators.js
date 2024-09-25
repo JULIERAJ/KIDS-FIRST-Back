@@ -1,3 +1,5 @@
+const { dateConverter } = require('./helper');
+
 const validateImageURL = (url) => /\.(jpeg|jpg|png)$/.test(url);
 
 const validateImageSize = () => {
@@ -9,8 +11,7 @@ const validateImageSize = () => {
 
 const validateDOB = (value) => {
   if (!value) return true;
-  const [day, month, year] = value.split('/');
-  const date = new Date(`${year}-${month}-${day}`);
+  const date = dateConverter(value);
   return date < new Date();
 };
 

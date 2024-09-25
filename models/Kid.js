@@ -35,12 +35,17 @@ const KidsSchema = new Schema(
     imageProfilePublicId: {
       type: String,
     },
-    DOB: {
+    dateOfBirthday: {
       type: String,
       validate: {
         validator: validateDOB,
         message: 'The date needs to be in the past',
+        required: true,
       },
+    },
+    age: {
+      type: String,
+      required: [true, 'Age is a required field'],
     },
     allergies: {
       type: [
