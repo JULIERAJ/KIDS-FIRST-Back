@@ -12,8 +12,8 @@ const helmet = require('helmet');
 const kidsRoutes = require('./routes/kids');
 const userRoutes = require('./routes/user');
 const shareKid = require('./routes/share-kid');
-const albumRoutes = require('./routes/album');
 const messagesRoutes = require('./routes/messages');
+const calendarRoutes = require('./routes/calendar');
 
 const errorHandlerMiddleware = require('./middleware/error-handler');
 const notFoundMiddleware = require('./middleware/not-found');
@@ -52,8 +52,8 @@ app.use('/api/v1', userRoutes);
 app.use('/api/v1', shareKid);
 app.use('/api/v1/kids', kidsRoutes);
 app.use('/api/v1/kids', shareKid);
-app.use('/api/v1/album', albumRoutes);
 app.use('/api/v1/messages', messagesRoutes);
+app.use('/api/v1/calendar', calendarRoutes);
 
 // Error handling middleware
 app.use(notFoundMiddleware);
