@@ -7,7 +7,7 @@ const createCalendarEvent = asyncWrapper(async (req, res) => {
   const { kidID } = req.params;
   const { title, description, startTime, endTime, sharedWith, eventType } = req.body;
   const createdBy = req.user._id;
-  const result = await calendarService.createCalendarEvent(
+  const result = await calendarService.createEvent( 
     kidID,
     createdBy,
     title,
@@ -25,7 +25,7 @@ const updateCalendarEvent = asyncWrapper(async (req, res) => {
   const { eventId } = req.params;
   const { title, description, startTime, endTime, sharedWith, eventType, status } = req.body;
   const userId = req.user._id;
-  const result = await calendarService.updateCalendarEvent(
+  const result = await calendarService.updateEvent( 
     eventId,
     userId,
     title,
@@ -43,7 +43,7 @@ const updateCalendarEvent = asyncWrapper(async (req, res) => {
 const deleteCalendarEvent = asyncWrapper(async (req, res) => {
   const { eventId } = req.params;
   const userId = req.user._id;
-  const result = await calendarService.deleteCalendarEvent(eventId, userId);
+  const result = await calendarService.deleteEvent(eventId, userId); 
   res.status(StatusCodes.OK).json(result);
 });
 
@@ -51,7 +51,7 @@ const deleteCalendarEvent = asyncWrapper(async (req, res) => {
 const getCalendarEvents = asyncWrapper(async (req, res) => {
   const { kidID } = req.params;
   const userId = req.user._id;
-  const events = await calendarService.getCalendarEvents(kidID, userId);
+  const events = await calendarService.getEventsForKid(kidID, userId); 
   res.status(StatusCodes.OK).json(events);
 });
 
@@ -59,9 +59,8 @@ const getCalendarEvents = asyncWrapper(async (req, res) => {
 const getCalendarEventById = asyncWrapper(async (req, res) => {
   const { eventId } = req.params;
   const userId = req.user._id;
-  const event = await calendarService.getCalendarEventById(eventId, userId);
+  const event = await calendarService.getEventById(eventId, userId); 
   res.status(StatusCodes.OK).json(event);
-  res.status(StatusCodes.OK).json({message: 'Success request'});
 });
 
 module.exports = {
