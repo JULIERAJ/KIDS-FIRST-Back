@@ -1,31 +1,7 @@
 /* eslint-disable camelcase */
 const { StatusCodes } = require('http-status-codes');
-const {
-  uploader,
-  resources_by_asset_folder,
-} = require('../config/cloudinary-config');
+const { resources_by_asset_folder } = require('../config/cloudinary-config');
 const Album = require('../models/Album');
-
-// Upload files to Cloudinary
-const uploadFilesCloudinary = async (file, userId) => {
-  try {
-    const result = await uploader.upload(file, {
-      folder: `albums/${userId}`,
-    });
-
-    return {
-      status: StatusCodes.OK,
-      message: 'File successfully uploaded to Cloudinary.',
-      url: result.secure_url,
-    };
-  } catch (error) {
-    return {
-      status: StatusCodes.BAD_GATEWAY,
-      message: 'Error uploading file to Cloudinary.',
-      error: error,
-    };
-  }
-};
 
 // Create new album in database
 const createNewAlbum = async (data) => {
@@ -106,7 +82,6 @@ const getAllPhotoCloudinary = async (userId) => {
 };
 
 module.exports = {
-  uploadFilesCloudinary,
   createNewAlbum,
   getAlbum,
   updateAlbum,
