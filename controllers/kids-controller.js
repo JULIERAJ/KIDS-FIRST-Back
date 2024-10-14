@@ -20,8 +20,8 @@ const createKidCtrl = asyncWrapper(async (req, res) => {
   try {
     const { id: userId } = req.user;
     let imageProfileURL;
-    if (req.files) {
-      const fileUri = dataUri(req.files[0]).content;
+    if (req.file) {
+      const fileUri = dataUri(req.file).content;
       const cloudinaryUploadResult = await uploadFilesCloudinary(
         fileUri,
         userId,
