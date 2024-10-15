@@ -11,12 +11,37 @@ const getAllKids = async (userId) => {
   return allKids;
 };
 
-const createKid = async (data, userId) => {
-  const age = moment().diff(dateConverter(data.dateOfBirthday), 'years', false);
-  const kid = new Kid({ ...data, age: age, custodyIDs: [userId] });
-  await kid.save();
-  await User.findByIdAndUpdate(userId, { $push: { kids: kid._id } });
-  return kid;
+const createKid = async (data, userId, imageProfileURL) => {
+  try {
+    let kid;
+    const age = moment().diff(
+      dateConverter(data.dateOfBirthday),
+      'years',
+      false,
+    );
+    if (data.allergies.length === 0) data.allergies = [];
+    if (data.interests.length === 0) data.interests = [];
+    if (data.fears.length === 0) data.fears = [];
+    if (imageProfileURL) {
+      kid = new Kid({
+        ...data,
+        age: age,
+        custodyIDs: [userId],
+        imageProfileURL: imageProfileURL,
+      });
+    } else {
+      kid = new Kid({
+        ...data,
+        age: age,
+        custodyIDs: [userId],
+      });
+    }
+    await kid.save();
+    await User.findByIdAndUpdate(userId, { $push: { kids: kid._id } });
+    return kid;
+  } catch (err) {
+    throw new Error(err);
+  }
 };
 
 const getKidById = async (kidId, userId) => {

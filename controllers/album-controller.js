@@ -1,7 +1,7 @@
 const { StatusCodes } = require('http-status-codes');
 const asyncWrapper = require('../middleware/async-wrapper');
+const { uploadFilesCloudinary } = require('../middleware/cloudinary');
 const {
-  uploadFilesCloudinary,
   createNewAlbum,
   getAlbum,
   updateAlbum,
