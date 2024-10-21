@@ -4,11 +4,8 @@ const User = require('../models/User');
 const { dateConverter } = require('../utils/helper');
 
 const getAllKids = async (userId) => {
-  const allKids = Kid.find({ custodyIDs: userId });
-  if (!allKids) {
-    throw new Error(`No kids found`);
-  }
-  return allKids;
+  const allKids = await Kid.find({ custodyIDs: userId });
+  return allKids; // Simply return the result, even if empty
 };
 
 const createKid = async (data, userId, imageProfileURL) => {
@@ -19,9 +16,12 @@ const createKid = async (data, userId, imageProfileURL) => {
       'years',
       false,
     );
-    if (data.allergies.length === 0) data.allergies = [];
-    if (data.interests.length === 0) data.interests = [];
-    if (data.fears.length === 0) data.fears = [];
+
+    // Initialize arrays if they don't exist or are empty
+    if (!data.allergies || data.allergies.length === 0) data.allergies = [];
+    if (!data.interests || data.interests.length === 0) data.interests = [];
+    if (!data.fears || data.fears.length === 0) data.fears = [];
+
     if (imageProfileURL) {
       kid = new Kid({
         ...data,
@@ -36,11 +36,15 @@ const createKid = async (data, userId, imageProfileURL) => {
         custodyIDs: [userId],
       });
     }
+
     await kid.save();
     await User.findByIdAndUpdate(userId, { $push: { kids: kid._id } });
-    return kid;
+    
+    console.log(kid);
+
+    return kid; // Return the created kid object
   } catch (err) {
-    throw new Error(err);
+    throw err; // Re-throw the error for consistent handling
   }
 };
 
@@ -51,14 +55,12 @@ const getKidById = async (kidId, userId) => {
   }
   return kid;
 };
+
 const updateKid = async (kidId, userId, data) => {
   const updatedKid = await Kid.findOneAndUpdate(
     { _id: kidId, custodyIDs: userId },
     data,
-    {
-      new: true,
-      runValidators: true,
-    },
+    { new: true, runValidators: true }, // Options for findOneAndUpdate
   );
   if (!updatedKid) {
     throw new Error(`Kid not found`);
@@ -85,3 +87,5 @@ module.exports = {
   updateKid,
   deleteKid,
 };
+
+
