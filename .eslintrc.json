@@ -3,7 +3,7 @@
     "jest/globals": true
 },
   "extends": ["airbnb", "prettier", "plugin:node/recommended"],
-  "plugins": ["prettier"],
+  "plugins": ["prettier", "jest"],
   "parserOptions": {
     "ecmaVersion": 2018, 
     "sourceType": "module"
