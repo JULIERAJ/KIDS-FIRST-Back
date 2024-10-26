@@ -18,7 +18,7 @@ describe('Kids Service', () => {
       expect(Kid.find).toHaveBeenCalledWith({ custodyIDs: 'userId' });
     });
 
-    it('should NOT throw an error if no kids are found', async () => { // Adjusted test
+    it('should NOT throw an error if no kids are found', async () => {
       Kid.find.mockResolvedValue([]); 
 
       const result = await getAllKids('userId'); 
@@ -65,7 +65,7 @@ describe('Kids Service', () => {
 
       await expect(createKid(mockKidData, 'userId'))
         .rejects
-        .toThrow(new Error(errorMessage)); // Expecting a wrapped error
+        .toThrow(new Error(errorMessage));
     });
   });
 
