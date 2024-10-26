@@ -5,47 +5,36 @@ const { dateConverter } = require('../utils/helper');
 
 const getAllKids = async (userId) => {
   const allKids = await Kid.find({ custodyIDs: userId });
-  return allKids; // Simply return the result, even if empty
+  return allKids;
 };
 
 const createKid = async (data, userId, imageProfileURL) => {
-  try {
-    let kid;
-    const age = moment().diff(
-      dateConverter(data.dateOfBirthday),
-      'years',
-      false,
-    );
+  let kid;
+  const age = moment().diff(dateConverter(data.dateOfBirthday), 'years', false);
 
-    // Initialize arrays if they don't exist or are empty
-    if (!data.allergies || data.allergies.length === 0) data.allergies = [];
-    if (!data.interests || data.interests.length === 0) data.interests = [];
-    if (!data.fears || data.fears.length === 0) data.fears = [];
+  // Initialize arrays if they don't exist or are empty
+  if (!data.allergies || data.allergies.length === 0) data.allergies = [];
+  if (!data.interests || data.interests.length === 0) data.interests = [];
+  if (!data.fears || data.fears.length === 0) data.fears = [];
 
-    if (imageProfileURL) {
-      kid = new Kid({
-        ...data,
-        age: age,
-        custodyIDs: [userId],
-        imageProfileURL: imageProfileURL,
-      });
-    } else {
-      kid = new Kid({
-        ...data,
-        age: age,
-        custodyIDs: [userId],
-      });
-    }
-
-    await kid.save();
-    await User.findByIdAndUpdate(userId, { $push: { kids: kid._id } });
-    
-    console.log(kid);
-
-    return kid; // Return the created kid object
-  } catch (err) {
-    throw err; // Re-throw the error for consistent handling
+  if (imageProfileURL) {
+    kid = new Kid({
+      ...data,
+      age: age,
+      custodyIDs: [userId],
+      imageProfileURL: imageProfileURL,
+    });
+  } else {
+    kid = new Kid({
+      ...data,
+      age: age,
+      custodyIDs: [userId],
+    });
   }
+
+  await kid.save();
+  await User.findByIdAndUpdate(userId, { $push: { kids: kid._id } });
+  return kid;
 };
 
 const getKidById = async (kidId, userId) => {
@@ -60,7 +49,7 @@ const updateKid = async (kidId, userId, data) => {
   const updatedKid = await Kid.findOneAndUpdate(
     { _id: kidId, custodyIDs: userId },
     data,
-    { new: true, runValidators: true }, // Options for findOneAndUpdate
+    { new: true, runValidators: true },
   );
   if (!updatedKid) {
     throw new Error(`Kid not found`);
@@ -87,5 +76,3 @@ module.exports = {
   updateKid,
   deleteKid,
 };
-
-
