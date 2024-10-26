@@ -1,6 +1,7 @@
 const { StatusCodes } = require('http-status-codes');
 const asyncWrapper = require('../middleware/async-wrapper');
 const { uploadFilesCloudinary } = require('../middleware/cloudinary');
+const { dataUri } = require('../utils/helper');
 const {
   createNewAlbum,
   getAlbum,
@@ -8,14 +9,27 @@ const {
   getAllPhotoCloudinary,
 } = require('../service/album-service');
 
-const { dataUri } = require('../middleware/multer');
-
 // Controller to upload files through multer and cloudinary
 const fileUploader = asyncWrapper(async (req, res) => {
   try {
     const { userId } = req.params;
-    const existingAlbum = await getAlbum(userId);
-    const cloudinaryUploadPromises = req.files.map(async (file) => {
+    const cloudinaryUploadPromises = req.files.map(async (file, index) => {
+      const existingAlbum = await getAlbum(userId);
+      if (existingAlbum.length === 0 && index === 0)
+        existingAlbum.totalStorageSpaceUsed = file.size;
+      if (existingAlbum.length > 0) {
+        if (
+          existingAlbum.totalStorageSpaceUsed + file.size >
+          process.env.MAX_STORAGE_SIZE
+        ) {
+          throw new Error(
+            'Insufficient storage space. Please clear files from Album to add more files.',
+          );
+        } else {
+          existingAlbum.totalStorageSpaceUsed += file.size;
+        }
+      }
+
       const fileUri = dataUri(file).content;
       const cloudinaryUploadResult = await uploadFilesCloudinary(
         fileUri,
@@ -26,12 +40,26 @@ const fileUploader = asyncWrapper(async (req, res) => {
       if (cloudinaryUploadResult.status === 200 && existingAlbum.length === 0) {
         //TODO: Add MessageID and KidID. This is pending Message Service creation
         dbUploadResult = await createNewAlbum({
-          photos: [{ url: cloudinaryUploadResult.url }],
+          photos: [
+            {
+              url: cloudinaryUploadResult.url,
+              fileName: file.originalname,
+              fileType: file.mimetype.split('/')[1],
+              fileSize: file.size,
+            },
+          ],
+          messageId: req.messageId,
+          kidId: req.kidId,
           createdBy: userId,
+          totalStorageSpaceUsed: existingAlbum.totalStorageSpaceUsed,
         });
       } else if (cloudinaryUploadResult.status === 200) {
         dbUploadResult = await updateAlbum(userId, {
           url: cloudinaryUploadResult.url,
+          fileName: file.originalname,
+          fileType: file.mimetype.split('/')[1],
+          fileSize: file.size,
+          totalStorageSpaceUsed: existingAlbum.totalStorageSpaceUsed,
         });
       } else {
         dbUploadResult = cloudinaryUploadResult;

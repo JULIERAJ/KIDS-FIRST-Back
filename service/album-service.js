@@ -12,7 +12,7 @@ const createNewAlbum = async (data) => {
       return {
         status: StatusCodes.OK,
         message: 'Successfully updated database with new images.',
-        url: photos.url,
+        url: results.photos[0].url,
       };
     }
     return {
@@ -20,13 +20,17 @@ const createNewAlbum = async (data) => {
       message: 'Error updating database. Review request parameters.',
     };
   } catch (err) {
-    return new Error({ message: 'Error updating database.', error: err });
+    return {
+      status: StatusCodes.BAD_GATEWAY,
+      message: 'Error updating database.',
+      error: err,
+    };
   }
 };
 
 // Get album details from database
 const getAlbum = async (userId) => {
-  const album = Album.find({ createdBy: userId });
+  const album = await Album.find({ createdBy: userId });
   if (album || album.isArray) {
     return album;
   }
@@ -34,11 +38,14 @@ const getAlbum = async (userId) => {
 };
 
 // Upload new photos to album in database
-const updateAlbum = async (createdBy, photo) => {
+const updateAlbum = async (createdBy, photo, totalStorageSpaceUsed) => {
   try {
     const albumUpdate = await Album.findOneAndUpdate(
-      { createdBy },
-      { $push: { photos: photo } },
+      { createdBy: createdBy },
+      {
+        totalStorageSpaceUsed: totalStorageSpaceUsed,
+        $push: { photos: photo },
+      },
       {
         new: true,
         runValidators: true,
@@ -56,7 +63,12 @@ const updateAlbum = async (createdBy, photo) => {
       message: 'Error updating database. Review request parameters.',
     };
   } catch (err) {
-    return new Error({ message: 'Error updating database.', error: err });
+    console.log(err);
+    return {
+      status: StatusCodes.BAD_GATEWAY,
+      message: 'Error updating database.',
+      error: err,
+    };
   }
 };
 
@@ -77,7 +89,11 @@ const getAllPhotoCloudinary = async (userId) => {
       };
     }
   } catch (err) {
-    return new Error(err);
+    return {
+      status: StatusCodes.BAD_GATEWAY,
+      message: 'Error getting photos.',
+      error: err,
+    };
   }
 };
 

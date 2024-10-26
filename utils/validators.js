@@ -1,13 +1,10 @@
 const { dateConverter } = require('./helper');
 
-const validateImageURL = (url) => /\.(jpeg|jpg|png)$/.test(url);
+const validateImageURL = (url) => /(jpeg|jpg|png)$/.test(url);
 
-const validateImageSize = () => {
-  // eslint-disable-next-line no-unused-vars
-  const MAX_SIZE = 500 * 1024; // 500 KB in bytes
-  //implement logic to check file size using multer
-  return true;
-};
+const validateImageSize = (value) => value < process.env.MAX_FILE_SIZE;
+
+const validateStorageSize = (value) => value < process.env.MAX_STORAGE_SIZE;
 
 const validateDOB = (value) => {
   if (!value) return true;
@@ -18,5 +15,6 @@ const validateDOB = (value) => {
 module.exports = {
   validateImageURL,
   validateImageSize,
+  validateStorageSize,
   validateDOB,
 };

@@ -1,6 +1,5 @@
 /* eslint-disable import/no-extraneous-dependencies */
 const multer = require('multer');
-const DatauriParser = require('datauri/parser');
 const { StatusCodes } = require('http-status-codes');
 
 // File size limit
@@ -79,16 +78,7 @@ const multerKidsPhotoUploader = (req, res, next) => {
   });
 };
 
-/**
- * @description This function converts the buffer to data url
- * @param {Object} file containing the field object
- * @returns {String} The data url from the string buffer
- */
-const parser = new DatauriParser();
-const dataUri = (file) =>
-  parser.format(file.mimetype.split('/')[1], file.buffer);
 module.exports = {
   multerUploader,
-  multerKidsPhotoUploader,
-  dataUri,
+  multerKidsPhotoUploader
 };
