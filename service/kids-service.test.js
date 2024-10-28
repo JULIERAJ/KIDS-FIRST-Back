@@ -35,20 +35,19 @@ describe('Kids Service', () => {
         interests: [], 
         fears: [] 
       };
-
       const mockAge = 9; 
       moment.mockImplementation(() => ({
         diff: jest.fn().mockReturnValue(mockAge), 
       }));
 
-      const savedKid = { ...mockKidData, age: mockAge, custodyIDs: ['userId'], _id: 'mockKidId' }; 
-      Kid.prototype.save = jest.fn().mockResolvedValue(savedKid);
-      User.findByIdAndUpdate.mockResolvedValue({ _id: 'userId' }); 
+      const savedKid = {...mockKidData, age: mockAge, custodyIDs: ['userId'], _id: 'mockKidId' };
+      (new Kid(savedKid)).save.mockResolvedValue(savedKid);
+      User.findByIdAndUpdate.mockResolvedValue({ userId:'userId', kids: [ savedKid._id ] });
 
       const result = await createKid(mockKidData, 'userId');
 
       expect(result).toEqual(savedKid);
-      expect(Kid.prototype.save).toHaveBeenCalled();
+      expect((new Kid(savedKid)).save).toHaveBeenCalled();
       expect(User.findByIdAndUpdate).toHaveBeenCalledWith('userId', { $push: { kids: savedKid._id } }); 
     });
 
