@@ -1,6 +1,9 @@
 {
+  "env": {
+    "jest/globals": true
+},
   "extends": ["airbnb", "prettier", "plugin:node/recommended"],
-  "plugins": ["prettier"],
+  "plugins": ["prettier", "jest"],
   "parserOptions": {
     "ecmaVersion": 2018, 
     "sourceType": "module"
@@ -19,5 +22,5 @@
     "class-methods-use-this": "off",
     "no-unused-vars": ["error", { "argsIgnorePattern": "req|res|next|val" }],
     "no-plusplus": "off"
-  }
+  }  
 }

@@ -32,9 +32,9 @@ const createKid = async (data, userId, imageProfileURL) => {
     });
   }
 
-  await kid.save();
-  await User.findByIdAndUpdate(userId, { $push: { kids: kid._id } });
-  return kid;
+  const result = await kid.save();
+  await User.findByIdAndUpdate(userId, { $push: { kids: result._id } });
+  return result;
 };
 
 const getKidById = async (kidId, userId) => {
