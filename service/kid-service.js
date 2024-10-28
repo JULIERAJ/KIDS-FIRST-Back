@@ -4,16 +4,34 @@ const User = require('../models/User');
 const { dateConverter } = require('../utils/helper');
 
 const getAllKids = async (userId) => {
-  const allKids = Kid.find({ custodyIDs: userId });
-  if (!allKids) {
-    throw new Error(`No kids found`);
-  }
+  const allKids = await Kid.find({ custodyIDs: userId });
   return allKids;
 };
 
-const createKid = async (data, userId) => {
+const createKid = async (data, userId, imageProfileURL) => {
+  let kid;
   const age = moment().diff(dateConverter(data.dateOfBirthday), 'years', false);
-  const kid = new Kid({ ...data, age: age, custodyIDs: [userId] });
+
+  // Initialize arrays if they don't exist or are empty
+  if (!data.allergies || data.allergies.length === 0) data.allergies = [];
+  if (!data.interests || data.interests.length === 0) data.interests = [];
+  if (!data.fears || data.fears.length === 0) data.fears = [];
+
+  if (imageProfileURL) {
+    kid = new Kid({
+      ...data,
+      age: age,
+      custodyIDs: [userId],
+      imageProfileURL: imageProfileURL,
+    });
+  } else {
+    kid = new Kid({
+      ...data,
+      age: age,
+      custodyIDs: [userId],
+    });
+  }
+
   await kid.save();
   await User.findByIdAndUpdate(userId, { $push: { kids: kid._id } });
   return kid;
@@ -26,14 +44,12 @@ const getKidById = async (kidId, userId) => {
   }
   return kid;
 };
+
 const updateKid = async (kidId, userId, data) => {
   const updatedKid = await Kid.findOneAndUpdate(
     { _id: kidId, custodyIDs: userId },
     data,
-    {
-      new: true,
-      runValidators: true,
-    },
+    { new: true, runValidators: true },
   );
   if (!updatedKid) {
     throw new Error(`Kid not found`);
