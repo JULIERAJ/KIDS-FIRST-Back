@@ -4,32 +4,32 @@ const { uploadFilesCloudinary } = require('../middleware/cloudinary');
 const { dataUri } = require('../utils/helper');
 const {
   createNewAlbum,
-  getAlbum,
+  getAlbumSize,
+  getMessageAttachments,
   updateAlbum,
-  getAllPhotoCloudinary,
+  getAlbumPhotos,
 } = require('../service/album-service');
 
 // Controller to upload files through multer and cloudinary
-const fileUploader = asyncWrapper(async (req, res) => {
+const albumFileUpload = asyncWrapper(async (req, res) => {
   try {
+    // Validate storage space is sufficient
     const { userId } = req.params;
-    const cloudinaryUploadPromises = req.files.map(async (file, index) => {
-      const existingAlbum = await getAlbum(userId);
-      if (existingAlbum.length === 0 && index === 0)
-        existingAlbum.totalStorageSpaceUsed = file.size;
-      if (existingAlbum.length > 0) {
-        if (
-          existingAlbum.totalStorageSpaceUsed + file.size >
-          process.env.MAX_STORAGE_SIZE
-        ) {
-          throw new Error(
-            'Insufficient storage space. Please clear files from Album to add more files.',
-          );
-        } else {
-          existingAlbum.totalStorageSpaceUsed += file.size;
-        }
-      }
+    const { messageId, kidId } = req.body;
+    let totalFileSize;
+    req.files.forEach((file) => {
+      totalFileSize += file.size;
+    });
 
+    const totalStorageSpaceUsed = await getAlbumSize(userId);
+    if (totalFileSize + totalStorageSpaceUsed > process.env.MAX_STORAGE_SIZE) {
+      throw new Error(
+        'Insufficient storage space. Please clear files from Album to add more files.',
+      );
+    }
+
+    // Upload to Cloudinary
+    const cloudinaryUploadPromises = req.files.map(async (file) => {
       const fileUri = dataUri(file).content;
       const cloudinaryUploadResult = await uploadFilesCloudinary(
         fileUri,
@@ -37,8 +37,8 @@ const fileUploader = asyncWrapper(async (req, res) => {
       );
       let dbUploadResult;
 
-      if (cloudinaryUploadResult.status === 200 && existingAlbum.length === 0) {
-        //TODO: Add MessageID and KidID. This is pending Message Service creation
+      const message = await getMessageAttachments(messageId);
+      if (cloudinaryUploadResult.status === 200 && message) {
         dbUploadResult = await createNewAlbum({
           photos: [
             {
@@ -48,10 +48,9 @@ const fileUploader = asyncWrapper(async (req, res) => {
               fileSize: file.size,
             },
           ],
-          messageId: req.messageId,
-          kidId: req.kidId,
+          messageId: messageId,
+          kidId: kidId,
           createdBy: userId,
-          totalStorageSpaceUsed: existingAlbum.totalStorageSpaceUsed,
         });
       } else if (cloudinaryUploadResult.status === 200) {
         dbUploadResult = await updateAlbum(userId, {
@@ -59,7 +58,6 @@ const fileUploader = asyncWrapper(async (req, res) => {
           fileName: file.originalname,
           fileType: file.mimetype.split('/')[1],
           fileSize: file.size,
-          totalStorageSpaceUsed: existingAlbum.totalStorageSpaceUsed,
         });
       } else {
         dbUploadResult = cloudinaryUploadResult;
@@ -78,12 +76,13 @@ const fileUploader = asyncWrapper(async (req, res) => {
   }
 });
 
-// Controller to get files from cloudinary
+// Controller to get all Album photos
 const getAllPhotos = asyncWrapper(async (req, res) => {
   try {
     const { userId } = req.params;
-    const results = await getAllPhotoCloudinary(userId);
-    res.status(StatusCodes.ACCEPTED).json(results);
+    const photos = await getAlbumPhotos(userId);
+    const albumSize = await getAlbumSize(userId);
+    res.status(StatusCodes.ACCEPTED).json({ albumSize, photos });
   } catch (err) {
     res.status(StatusCodes.BAD_GATEWAY).json({
       err,
@@ -91,4 +90,4 @@ const getAllPhotos = asyncWrapper(async (req, res) => {
   }
 });
 
-module.exports = { fileUploader, getAllPhotos };
+module.exports = { albumFileUpload, getAllPhotos };

@@ -1,11 +1,7 @@
 const mongoose = require('mongoose');
 
 const { Schema } = mongoose;
-const {
-  validateImageURL,
-  validateImageSize,
-  validateStorageSize,
-} = require('../utils/validators');
+const { validateImageURL, validateImageSize } = require('../utils/validators');
 
 const AlbumSchema = new Schema(
   {
@@ -42,17 +38,7 @@ const AlbumSchema = new Schema(
         },
       },
     ],
-    totalStorageSpaceUsed: {
-      type: Number,
-      required: [true, 'Storage size is required'],
-      validate: [
-        {
-          validator: validateStorageSize,
-          message: 'Total size must be less than 12 MB',
-        },
-      ],
-    },
-    kidID: {
+    kidId: {
       type: Schema.Types.ObjectId,
       ref: 'Kid',
       required: true,

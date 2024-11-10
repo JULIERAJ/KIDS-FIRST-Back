@@ -1,7 +1,51 @@
 /* eslint-disable camelcase */
 const { StatusCodes } = require('http-status-codes');
-const { resources_by_asset_folder } = require('../config/cloudinary-config');
 const Album = require('../models/Album');
+
+// Get message attachments by message Id
+const getMessageAttachments = async (messageId) => {
+  const attachments = await Album.find({ messageId: messageId });
+  if (attachments) return attachments;
+  return new Error('Error finding attachments.');
+};
+
+// Get album photos from database
+const getAlbumPhotos = async (userId) => {
+  try {
+    const messages = await Album.find({ createdBy: userId });
+    const album = [];
+    messages.forEach((message) => {
+      album.push(...message.photos);
+    });
+    return album;
+  } catch (err) {
+    return {
+      status: StatusCodes.BAD_GATEWAY,
+      message: 'Error retrieving album photos.',
+      error: err,
+    };
+  }
+};
+
+// Get album size from database
+const getAlbumSize = async (userId) => {
+  try {
+    const messages = await Album.find({ createdBy: userId });
+    let totalStorageSpaceUsed = 0;
+    messages.forEach((message) => {
+      message.photos.forEach((photo) => {
+        totalStorageSpaceUsed += photo.fileSize;
+      });
+    });
+    return totalStorageSpaceUsed || 0;
+  } catch (err) {
+    return {
+      status: StatusCodes.BAD_GATEWAY,
+      message: 'Error retrieving album details.',
+      error: err,
+    };
+  }
+};
 
 // Create new album in database
 const createNewAlbum = async (data) => {
@@ -26,15 +70,6 @@ const createNewAlbum = async (data) => {
       error: err,
     };
   }
-};
-
-// Get album details from database
-const getAlbum = async (userId) => {
-  const album = await Album.find({ createdBy: userId });
-  if (album || album.isArray) {
-    return album;
-  }
-  return new Error('Error finding album.');
 };
 
 // Upload new photos to album in database
@@ -63,7 +98,6 @@ const updateAlbum = async (createdBy, photo, totalStorageSpaceUsed) => {
       message: 'Error updating database. Review request parameters.',
     };
   } catch (err) {
-    console.log(err);
     return {
       status: StatusCodes.BAD_GATEWAY,
       message: 'Error updating database.',
@@ -72,34 +106,10 @@ const updateAlbum = async (createdBy, photo, totalStorageSpaceUsed) => {
   }
 };
 
-// Get all photos from Cloudinary
-// TODO: Set up pagination for images: https://cloudinary.com/blog/lazy-loading-with-infinite-scroll
-const getAllPhotoCloudinary = async (userId) => {
-  try {
-    const photos = await resources_by_asset_folder(
-      `albums/${userId}`,
-      { tags: true, metadata: true },
-      (error, result) => error,
-    );
-    if (photos) {
-      return {
-        status: StatusCodes.OK,
-        message: 'Successfully fetched images from Cloudinary.',
-        photos,
-      };
-    }
-  } catch (err) {
-    return {
-      status: StatusCodes.BAD_GATEWAY,
-      message: 'Error getting photos.',
-      error: err,
-    };
-  }
-};
-
 module.exports = {
   createNewAlbum,
-  getAlbum,
+  getAlbumPhotos,
+  getAlbumSize,
   updateAlbum,
-  getAllPhotoCloudinary,
+  getMessageAttachments,
 };
