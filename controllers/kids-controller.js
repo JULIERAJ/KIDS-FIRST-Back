@@ -8,7 +8,7 @@ const {
   deleteKid,
 } = require('../service/kid-service');
 const { uploadFilesCloudinary } = require('../middleware/cloudinary');
-const { dataUri } = require('../middleware/multer');
+const { dataUri } = require('../utils/helper');
 
 const getAllKidsCtrl = asyncWrapper(async (req, res) => {
   const { id: userId } = req.user;
@@ -26,7 +26,7 @@ const createKidCtrl = asyncWrapper(async (req, res) => {
         fileUri,
         userId,
       );
-      imageProfileURL = cloudinaryUploadResult.url;
+      imageProfileURL = cloudinaryUploadResult.secure_url;
     }
 
     const newKid = await createKid(req.body, userId, imageProfileURL);

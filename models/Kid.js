@@ -1,11 +1,7 @@
 const mongoose = require('mongoose');
 
 const { Schema } = mongoose;
-const {
-  validateImageURL,
-  validateImageSize,
-  validateDOB,
-} = require('../utils/validators');
+const { validateImageURL, validateDOB } = require('../utils/validators');
 
 const KidsSchema = new Schema(
   {
@@ -25,10 +21,6 @@ const KidsSchema = new Schema(
         {
           validator: validateImageURL,
           message: 'Image URL must be a valid .jpeg, .jpg, or .png file',
-        },
-        {
-          validator: validateImageSize,
-          message: 'Image size must be less than 500 KB',
         },
       ],
     },

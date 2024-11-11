@@ -40,7 +40,7 @@ const createKid = async (data, userId, imageProfileURL) => {
     await User.findByIdAndUpdate(userId, { $push: { kids: kid._id } });
     return kid;
   } catch (err) {
-    throw new Error(err);
+    return err;
   }
 };
 
