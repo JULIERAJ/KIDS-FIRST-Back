@@ -1,12 +1,16 @@
 const mongoose = require('mongoose');
+const { validateImageSize } = require('../utils/validators');
 
 const { Schema } = mongoose;
-const { validateImageURL, validateImageSize } = require('../utils/validators');
 
 const AlbumSchema = new Schema(
   {
     photos: [
       {
+        cloudinaryPublicId: {
+          type: String,
+          required: [true, 'Cloudinary Public Id is required'],
+        },
         url: {
           type: String,
           required: [true, 'File URL is required'],
@@ -14,17 +18,6 @@ const AlbumSchema = new Schema(
         fileName: {
           type: String,
           required: [true, 'File name is required'],
-        },
-        fileType: {
-          type: String,
-          required: [true, 'File type is required'],
-          validate: [
-            {
-              validator: validateImageURL,
-              message:
-                'Photo URL must be a valid .jpeg, .jpg, .png or .pdf file',
-            },
-          ],
         },
         fileSize: {
           type: Number,
@@ -51,7 +44,7 @@ const AlbumSchema = new Schema(
     messageId: {
       type: Schema.Types.ObjectId,
       ref: 'Message',
-      required: true,
+      required: false,
     },
   },
   {

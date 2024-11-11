@@ -1,25 +1,39 @@
-const { StatusCodes } = require('http-status-codes');
-const { uploader } = require('../config/cloudinary-config');
+const {
+  uploader,
+  // eslint-disable-next-line camelcase
+  resources_by_asset_folder,
+} = require('../config/cloudinary-config');
 
 // Upload files to Cloudinary
 const uploadFilesCloudinary = async (file, userId) => {
   try {
-    const result = await uploader.upload(file, {
-      folder: `albums/${userId}`,
-    });
-
-    return {
-      status: StatusCodes.OK,
-      message: 'File successfully uploaded to Cloudinary.',
-      url: result.secure_url,
-    };
+    const result = await uploader.upload(
+      file,
+      {
+        use_filename: true,
+        folder: `albums/${userId}`,
+      },
+      (error) => error,
+    );
+    return result;
   } catch (error) {
-    return {
-      status: StatusCodes.BAD_GATEWAY,
-      message: 'Error uploading file to Cloudinary.',
-      error: error,
-    };
+    return error;
   }
 };
 
-module.exports = { uploadFilesCloudinary };
+// Get all photos from Cloudinary
+// TODO: Set up pagination for images: https://cloudinary.com/blog/lazy-loading-with-infinite-scroll
+const getAllPhotoCloudinary = async (userId) => {
+  try {
+    const photos = await resources_by_asset_folder(
+      `albums/${userId}`,
+      { tags: true, metadata: true },
+      (error) => error,
+    );
+    return photos;
+  } catch (error) {
+    return error;
+  }
+};
+
+module.exports = { uploadFilesCloudinary, getAllPhotoCloudinary };

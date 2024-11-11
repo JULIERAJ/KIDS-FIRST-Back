@@ -1,5 +1,6 @@
 /* eslint-disable camelcase */
 const { StatusCodes } = require('http-status-codes');
+const { getAllPhotoCloudinary } = require('../middleware/cloudinary');
 const Album = require('../models/Album');
 
 // Get message attachments by message Id
@@ -12,12 +13,14 @@ const getMessageAttachments = async (messageId) => {
 // Get album photos from database
 const getAlbumPhotos = async (userId) => {
   try {
-    const messages = await Album.find({ createdBy: userId });
-    const album = [];
-    messages.forEach((message) => {
-      album.push(...message.photos);
+    const { resources } = await getAllPhotoCloudinary(userId);
+    //TODO: enrich with message data from database
+    // const attachments = await Album.find({ createdBy: userId });
+    let totalStorageSpaceUsed = 0;
+    resources.forEach((upload) => {
+      totalStorageSpaceUsed += upload.bytes;
     });
-    return album;
+    return { totalStorageSpaceUsed, resources };
   } catch (err) {
     return {
       status: StatusCodes.BAD_GATEWAY,
@@ -47,16 +50,17 @@ const getAlbumSize = async (userId) => {
   }
 };
 
-// Create new album in database
-const createNewAlbum = async (data) => {
+// Create new message attachments in database
+const createNewMessageAttachment = async (data) => {
   try {
-    const photos = new Album({ ...data });
-    const results = await photos.save();
+    const attachments = new Album({ ...data });
+    const results = await attachments.save();
     if (results) {
       return {
         status: StatusCodes.OK,
         message: 'Successfully updated database with new images.',
         url: results.photos[0].url,
+        cloudinaryPublicId: results.photos[0].cloudinaryPublicId,
       };
     }
     return {
@@ -72,13 +76,12 @@ const createNewAlbum = async (data) => {
   }
 };
 
-// Upload new photos to album in database
-const updateAlbum = async (createdBy, photo, totalStorageSpaceUsed) => {
+// Upload new attachments to existing message in database
+const addMessageAttachment = async (createdBy, photo) => {
   try {
     const albumUpdate = await Album.findOneAndUpdate(
       { createdBy: createdBy },
       {
-        totalStorageSpaceUsed: totalStorageSpaceUsed,
         $push: { photos: photo },
       },
       {
@@ -91,6 +94,40 @@ const updateAlbum = async (createdBy, photo, totalStorageSpaceUsed) => {
         status: StatusCodes.OK,
         message: 'Successfully updated database with new image.',
         url: photo.url,
+        cloudinaryPublicId: photo.cloudinaryPublicId,
+      };
+    }
+    return {
+      status: StatusCodes.BAD_REQUEST,
+      message: 'Error updating database. Review request parameters.',
+    };
+  } catch (err) {
+    return {
+      status: StatusCodes.BAD_GATEWAY,
+      message: 'Error updating database.',
+      error: err,
+    };
+  }
+};
+
+// Delete attachment to existing message in database
+const deleteMessageAttachment = async (createdBy, photoId) => {
+  try {
+    const albumUpdate = await Album.findOneAndUpdate(
+      { createdBy: createdBy },
+      {
+        $pull: { photos: photoId },
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+    if (albumUpdate) {
+      return {
+        status: StatusCodes.OK,
+        message: 'Successfully updated database with new image.',
+        url: photoId,
       };
     }
     return {
@@ -107,9 +144,10 @@ const updateAlbum = async (createdBy, photo, totalStorageSpaceUsed) => {
 };
 
 module.exports = {
-  createNewAlbum,
+  createNewMessageAttachment,
   getAlbumPhotos,
   getAlbumSize,
-  updateAlbum,
+  addMessageAttachment,
+  deleteMessageAttachment,
   getMessageAttachments,
 };

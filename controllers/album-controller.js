@@ -3,14 +3,14 @@ const asyncWrapper = require('../middleware/async-wrapper');
 const { uploadFilesCloudinary } = require('../middleware/cloudinary');
 const { dataUri } = require('../utils/helper');
 const {
-  createNewAlbum,
+  createNewMessageAttachment,
   getAlbumSize,
   getMessageAttachments,
-  updateAlbum,
+  addMessageAttachment,
   getAlbumPhotos,
 } = require('../service/album-service');
 
-// Controller to upload files through multer and cloudinary
+// Controller to upload message attachments to cloudinary
 const albumFileUpload = asyncWrapper(async (req, res) => {
   try {
     // Validate storage space is sufficient
@@ -38,13 +38,13 @@ const albumFileUpload = asyncWrapper(async (req, res) => {
       let dbUploadResult;
 
       const message = await getMessageAttachments(messageId);
-      if (cloudinaryUploadResult.status === 200 && message) {
-        dbUploadResult = await createNewAlbum({
+      if (cloudinaryUploadResult && message) {
+        dbUploadResult = await createNewMessageAttachment({
           photos: [
             {
-              url: cloudinaryUploadResult.url,
+              cloudinaryPublicId: cloudinaryUploadResult.public_id,
+              url: cloudinaryUploadResult.secure_url,
               fileName: file.originalname,
-              fileType: file.mimetype.split('/')[1],
               fileSize: file.size,
             },
           ],
@@ -52,11 +52,11 @@ const albumFileUpload = asyncWrapper(async (req, res) => {
           kidId: kidId,
           createdBy: userId,
         });
-      } else if (cloudinaryUploadResult.status === 200) {
-        dbUploadResult = await updateAlbum(userId, {
-          url: cloudinaryUploadResult.url,
+      } else if (cloudinaryUploadResult) {
+        dbUploadResult = await addMessageAttachment(userId, {
+          cloudinaryPublicId: cloudinaryUploadResult.public_id,
+          url: cloudinaryUploadResult.secure_url,
           fileName: file.originalname,
-          fileType: file.mimetype.split('/')[1],
           fileSize: file.size,
         });
       } else {
@@ -76,13 +76,12 @@ const albumFileUpload = asyncWrapper(async (req, res) => {
   }
 });
 
-// Controller to get all Album photos
-const getAllPhotos = asyncWrapper(async (req, res) => {
+// Controller to get all Album photos from cloudinary
+const getAllFiles = asyncWrapper(async (req, res) => {
   try {
     const { userId } = req.params;
-    const photos = await getAlbumPhotos(userId);
-    const albumSize = await getAlbumSize(userId);
-    res.status(StatusCodes.ACCEPTED).json({ albumSize, photos });
+    const attachments = await getAlbumPhotos(userId);
+    res.status(StatusCodes.ACCEPTED).json(attachments);
   } catch (err) {
     res.status(StatusCodes.BAD_GATEWAY).json({
       err,
@@ -90,4 +89,4 @@ const getAllPhotos = asyncWrapper(async (req, res) => {
   }
 });
 
-module.exports = { albumFileUpload, getAllPhotos };
+module.exports = { albumFileUpload, getAllFiles };
