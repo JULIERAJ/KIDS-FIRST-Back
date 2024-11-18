@@ -6,8 +6,7 @@ const Album = require('../models/Album');
 // Get message attachments by message Id
 const getMessageAttachments = async (messageId) => {
   const attachments = await Album.find({ messageId: messageId });
-  if (attachments) return attachments;
-  return new Error('Error finding attachments.');
+  return attachments;
 };
 
 // Get album photos from database
@@ -23,7 +22,6 @@ const getAlbumPhotos = async (userId) => {
     return { totalStorageSpaceUsed, resources };
   } catch (err) {
     return {
-      status: StatusCodes.BAD_GATEWAY,
       message: 'Error retrieving album photos.',
       error: err,
     };
@@ -33,17 +31,16 @@ const getAlbumPhotos = async (userId) => {
 // Get album size from database
 const getAlbumSize = async (userId) => {
   try {
-    const messages = await Album.find({ createdBy: userId });
+    const attachments = await Album.find({ createdBy: userId });
     let totalStorageSpaceUsed = 0;
-    messages.forEach((message) => {
-      message.photos.forEach((photo) => {
+    attachments.forEach((attachment) => {
+      attachment.photos.forEach((photo) => {
         totalStorageSpaceUsed += photo.fileSize;
       });
     });
     return totalStorageSpaceUsed || 0;
   } catch (err) {
     return {
-      status: StatusCodes.BAD_GATEWAY,
       message: 'Error retrieving album details.',
       error: err,
     };
@@ -77,10 +74,10 @@ const createNewMessageAttachment = async (data) => {
 };
 
 // Upload new attachments to existing message in database
-const addMessageAttachment = async (createdBy, photo) => {
+const addMessageAttachment = async (createdBy, messageId, photo) => {
   try {
     const albumUpdate = await Album.findOneAndUpdate(
-      { createdBy: createdBy },
+      { createdBy: createdBy, messageId: messageId },
       {
         $push: { photos: photo },
       },
@@ -111,23 +108,33 @@ const addMessageAttachment = async (createdBy, photo) => {
 };
 
 // Delete attachment to existing message in database
-const deleteMessageAttachment = async (createdBy, photoId) => {
+const deleteMessageAttachment = async (
+  createdBy,
+  messageId,
+  cloudinaryPublicId,
+) => {
   try {
     const albumUpdate = await Album.findOneAndUpdate(
-      { createdBy: createdBy },
+      { createdBy: createdBy, messageId: messageId },
       {
-        $pull: { photos: photoId },
+        $pull: { photos: { cloudinaryPublicId } },
       },
       {
         new: true,
         runValidators: true,
       },
     );
+    if (albumUpdate.photos.length === 0) {
+      Album.findOneAndDelete({
+        createdBy: createdBy,
+        messageId: messageId,
+      });
+    }
     if (albumUpdate) {
       return {
         status: StatusCodes.OK,
-        message: 'Successfully updated database with new image.',
-        url: photoId,
+        message: 'Successfully removed attachment from database.',
+        albumUpdate: albumUpdate,
       };
     }
     return {
@@ -143,11 +150,43 @@ const deleteMessageAttachment = async (createdBy, photoId) => {
   }
 };
 
+// Delete attachment to existing message in database
+const cleanEmptyAttachments = async (createdBy, messageId) => {
+  try {
+    const attachments = await Album.find({
+      createdBy: createdBy,
+      messageId: messageId,
+    });
+    if (attachments.photos.length === 0) {
+      const deleteResults = Album.findOneAndDelete({
+        createdBy: createdBy,
+        messageId: messageId,
+      });
+
+      return {
+        status: StatusCodes.OK,
+        message: 'Successfully cleaned up message attachments in database.',
+        results: deleteResults,
+      };
+    }
+    return {
+      status: StatusCodes.OK,
+    };
+  } catch (err) {
+    return {
+      status: StatusCodes.BAD_GATEWAY,
+      message: 'Error updating database.',
+      error: err,
+    };
+  }
+};
+
 module.exports = {
   createNewMessageAttachment,
   getAlbumPhotos,
   getAlbumSize,
+  getMessageAttachments,
   addMessageAttachment,
   deleteMessageAttachment,
-  getMessageAttachments,
+  cleanEmptyAttachments,
 };

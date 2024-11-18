@@ -1,12 +1,16 @@
 const { StatusCodes } = require('http-status-codes');
 const asyncWrapper = require('../middleware/async-wrapper');
-const { uploadFilesCloudinary } = require('../middleware/cloudinary');
+const {
+  uploadFilesCloudinary,
+  deletePhotoCloudinary,
+} = require('../middleware/cloudinary');
 const { dataUri } = require('../utils/helper');
 const {
   createNewMessageAttachment,
   getAlbumSize,
   getMessageAttachments,
   addMessageAttachment,
+  deleteMessageAttachment,
   getAlbumPhotos,
 } = require('../service/album-service');
 
@@ -38,7 +42,7 @@ const albumFileUpload = asyncWrapper(async (req, res) => {
       let dbUploadResult;
 
       const message = await getMessageAttachments(messageId);
-      if (cloudinaryUploadResult && message) {
+      if (cloudinaryUploadResult && message.length === 0) {
         dbUploadResult = await createNewMessageAttachment({
           photos: [
             {
@@ -53,7 +57,7 @@ const albumFileUpload = asyncWrapper(async (req, res) => {
           createdBy: userId,
         });
       } else if (cloudinaryUploadResult) {
-        dbUploadResult = await addMessageAttachment(userId, {
+        dbUploadResult = await addMessageAttachment(userId, messageId, {
           cloudinaryPublicId: cloudinaryUploadResult.public_id,
           url: cloudinaryUploadResult.secure_url,
           fileName: file.originalname,
@@ -76,7 +80,7 @@ const albumFileUpload = asyncWrapper(async (req, res) => {
   }
 });
 
-// Controller to get all Album photos from cloudinary
+// Get all Album photos from cloudinary
 const getAllFiles = asyncWrapper(async (req, res) => {
   try {
     const { userId } = req.params;
@@ -89,4 +93,33 @@ const getAllFiles = asyncWrapper(async (req, res) => {
   }
 });
 
-module.exports = { albumFileUpload, getAllFiles };
+// Delete Album photo from message and Cloudinary
+const deleteFiles = asyncWrapper(async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { publicIds, messageId } = req.body;
+    const cloudinaryDeletePromises = publicIds.map(
+      async (cloudinaryPublicId) => {
+        let deleteResults = await deletePhotoCloudinary(cloudinaryPublicId);
+
+        if (deleteResults) {
+          deleteResults = await deleteMessageAttachment(
+            userId,
+            messageId,
+            cloudinaryPublicId,
+          );
+        }
+
+        return deleteResults;
+      },
+    );
+    const cloudinaryDeleteResults = await Promise.all(cloudinaryDeletePromises);
+    res.status(StatusCodes.OK).json(cloudinaryDeleteResults);
+  } catch (err) {
+    res.status(StatusCodes.BAD_GATEWAY).json({
+      err,
+    });
+  }
+});
+
+module.exports = { albumFileUpload, getAllFiles, deleteFiles };

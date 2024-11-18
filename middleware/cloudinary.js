@@ -36,4 +36,18 @@ const getAllPhotoCloudinary = async (userId) => {
   }
 };
 
-module.exports = { uploadFilesCloudinary, getAllPhotoCloudinary };
+// Delete files from Cloudinary
+const deletePhotoCloudinary = async (publicId) => {
+  try {
+    const result = await uploader.destroy(publicId);
+    return result;
+  } catch (error) {
+    return error;
+  }
+};
+
+module.exports = {
+  uploadFilesCloudinary,
+  getAllPhotoCloudinary,
+  deletePhotoCloudinary,
+};
