@@ -47,10 +47,30 @@ const getKidByIdCtrl = asyncWrapper(async (req, res) => {
 });
 
 const updateKidCtrl = asyncWrapper(async (req, res) => {
-  const { id: userId } = req.user;
-  const { id: kidId } = req.params;
-  const updatedKid = await updateKid(kidId, userId, req.body);
-  res.status(StatusCodes.OK).json({ updatedKid });
+  try {
+    const { id: userId } = req.user;
+    const { id: kidId } = req.params; 
+
+    let imageProfileURL;
+
+    if (req.file) {
+      const fileUri = dataUri(req.file).content; 
+      const cloudinaryUploadResult = await uploadFilesCloudinary(
+        fileUri,
+        userId,
+      );
+      imageProfileURL = cloudinaryUploadResult.url; 
+    }
+
+    const updatedKid = await updateKid(kidId, userId, req.body, imageProfileURL);
+
+    res.status(StatusCodes.OK).json({ updatedKid });
+  } catch (err) {
+    console.error('Update Error:', err);
+    res.status(StatusCodes.BAD_GATEWAY).json({
+      error: err.message || 'Failed to update kid information',
+    });
+  }
 });
 
 const deleteKidCtrl = asyncWrapper(async (req, res) => {

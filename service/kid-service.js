@@ -45,15 +45,30 @@ const getKidById = async (kidId, userId) => {
   return kid;
 };
 
-const updateKid = async (kidId, userId, data) => {
-  const updatedKid = await Kid.findOneAndUpdate(
-    { _id: kidId, custodyIDs: userId },
-    data,
-    { new: true, runValidators: true },
-  );
-  if (!updatedKid) {
-    throw new Error(`Kid not found`);
+const updateKid = async (kidId, userId, updateData, imageProfileURL = null) => {
+  // Calculate the age if the date of birth is being updated
+  if (updateData.dateOfBirthday) {
+    updateData.age = moment().diff(dateConverter(updateData.dateOfBirthday), 'years', false);
   }
+  // Initialize arrays if they don't exist or are empty
+  if (!updateData.allergies && updateData.allergies.length === 0) updateData.allergies = [];
+  if (!updateData.interests && updateData.interests.length === 0) updateData.interests = [];
+  if (!updateData.fears && updateData.fears.length === 0) updateData.fears = [];
+
+  if (imageProfileURL) {
+    updateData.imageProfileURL = imageProfileURL;
+  }
+
+  const updatedKid = await Kid.findByIdAndUpdate(
+    { _id: kidId, custodyIDs: userId },
+    updateData,
+    { new: true },
+  );
+
+  if (!updatedKid) {
+    throw new Error('Kid not found or failed to update');
+  }
+
   return updatedKid;
 };
 

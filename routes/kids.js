@@ -15,7 +15,13 @@ router.post(
   kidsController.createKid,
 );
 router.get('/:id', authenticateUser, kidsController.getKidById);
-router.put('/:id', authenticateUser, kidsController.updateKid);
+router.put(
+  '/:id',
+  authenticateUser,
+  multerKidsPhotoUploader,
+  cloudinaryConfig,
+  kidsController.updateKid
+);
 router.delete('/:id', authenticateUser, kidsController.deleteKid);
 
 module.exports = router;
