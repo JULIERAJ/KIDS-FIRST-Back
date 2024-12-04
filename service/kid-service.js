@@ -50,10 +50,24 @@ const updateKid = async (kidId, userId, updateData, imageProfileURL = null) => {
   if (updateData.dateOfBirthday) {
     updateData.age = moment().diff(dateConverter(updateData.dateOfBirthday), 'years', false);
   }
-  // Initialize arrays if they don't exist or are empty
-  if (!updateData.allergies && updateData.allergies.length === 0) updateData.allergies = [];
-  if (!updateData.interests && updateData.interests.length === 0) updateData.interests = [];
-  if (!updateData.fears && updateData.fears.length === 0) updateData.fears = [];
+  // Preprocess allergies, interests, and fears to ensure they are arrays
+  if (typeof updateData.allergies === 'string') {
+    updateData.allergies = updateData.allergies.split(',').map(item => item.trim());
+  } else if (!Array.isArray(updateData.allergies)) {
+    updateData.allergies = [];
+  }
+
+  if (typeof updateData.interests === 'string') {
+    updateData.interests = updateData.interests.split(',').map(item => item.trim());
+  } else if (!Array.isArray(updateData.interests)) {
+    updateData.interests = [];
+  }
+
+  if (typeof updateData.fears === 'string') {
+    updateData.fears = updateData.fears.split(',').map(item => item.trim());
+  } else if (!Array.isArray(updateData.fears)) {
+    updateData.fears = [];
+  }
 
   if (imageProfileURL) {
     updateData.imageProfileURL = imageProfileURL;
