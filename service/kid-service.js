@@ -45,15 +45,44 @@ const getKidById = async (kidId, userId) => {
   return kid;
 };
 
-const updateKid = async (kidId, userId, data) => {
-  const updatedKid = await Kid.findOneAndUpdate(
-    { _id: kidId, custodyIDs: userId },
-    data,
-    { new: true, runValidators: true },
-  );
-  if (!updatedKid) {
-    throw new Error(`Kid not found`);
+const updateKid = async (kidId, userId, updateData, imageProfileURL = null) => {
+  // Calculate the age if the date of birth is being updated
+  if (updateData.dateOfBirthday) {
+    updateData.age = moment().diff(dateConverter(updateData.dateOfBirthday), 'years', false);
   }
+  // Preprocess allergies, interests, and fears to ensure they are arrays
+  if (typeof updateData.allergies === 'string') {
+    updateData.allergies = updateData.allergies.split(',').map(item => item.trim());
+  } else if (!Array.isArray(updateData.allergies)) {
+    updateData.allergies = [];
+  }
+
+  if (typeof updateData.interests === 'string') {
+    updateData.interests = updateData.interests.split(',').map(item => item.trim());
+  } else if (!Array.isArray(updateData.interests)) {
+    updateData.interests = [];
+  }
+
+  if (typeof updateData.fears === 'string') {
+    updateData.fears = updateData.fears.split(',').map(item => item.trim());
+  } else if (!Array.isArray(updateData.fears)) {
+    updateData.fears = [];
+  }
+
+  if (imageProfileURL) {
+    updateData.imageProfileURL = imageProfileURL;
+  }
+
+  const updatedKid = await Kid.findByIdAndUpdate(
+    { _id: kidId, custodyIDs: userId },
+    updateData,
+    { new: true },
+  );
+
+  if (!updatedKid) {
+    throw new Error('Kid not found or failed to update');
+  }
+
   return updatedKid;
 };
 
